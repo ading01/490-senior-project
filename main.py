@@ -208,9 +208,8 @@ class Game:
         self.warning_text = None
         self.valid_cells = []
         self.strikes = 0
+        self.show_modal = False
     
-    # def reset_game(self):
-    #     for row in self.board:
             
 
     def get_board(self):
@@ -247,19 +246,7 @@ class Game:
         elif die_id >= 3:
             self.selected_dice[1] = die_id
         return
-        
-    
-        
-            
 
-
-        # if die_id not in self.selected_dice:
-        #     if len(self.selected_dice) >= 2:
-        #         self.selected_dice.pop(0)
-        #     self.selected_dice.append(die_id)
-        # elif remove:
-        #     self.selected_dice.remove(die_id)
-        
 
     def deactivate_cells(self):
         row_number = self.selected_hit_box[3]
@@ -280,6 +267,10 @@ class Game:
         score_text = FONT.render(f"score: {self.get_score()}", False, (0,0,0))
         self.screen.blit(score_text, (0,0))
 
+    def display_strikes(self):
+        score_text = FONT.render(f"strikes: {str(self.strikes)}", False, (0,0,0))
+        self.screen.blit(score_text, (0,30))
+
     def display_instructions(self):
         instruction_text = FONT.render(f"Instructions: {self.instruction_text}", False, (0,0,0))
         self.screen.blit(instruction_text, (0,15))
@@ -294,11 +285,13 @@ class Game:
                 for cell in row.cells:
                     if color == "white":
                         if cell.number == sum:
-                            self.valid_cells.append((cell.number, cell.x, cell.y))
+                            self.valid_cells.append(cell)
                     else:
                         if cell.number == sum and color == cell.color:
                             print(cell.number, cell.x, cell.y)
-                            self.valid_cells = [(cell.number, cell.x, cell.y, cell.color)]
+                            self.valid_cells = [cell]
+
+    # def draw_strike_box(self):
 
 
 
@@ -315,6 +308,7 @@ class Game:
 
 
         hit_boxes = self.display_board()
+        self.display_strikes()
 
         # if self.warning_text is not None:
         #     text_surface = FONT.render(f"{self.warning_text}", False, (0, 0, 0))
@@ -324,12 +318,12 @@ class Game:
         # press
 
         #score
-
+        # self.highlight_valid_cells()
         self.display_score()
         self.display_instructions()
         if len(self.valid_cells) > 0:
             for cell in self.valid_cells:
-                self.draw_selected_border(HIGHLIGHT_GREY, cell[1], cell[2], 60, 40)
+                self.draw_selected_border(HIGHLIGHT_GREY, cell.x, cell.y, 60, 40)
             
 
         if self.selected_hit_box is not None:
@@ -376,40 +370,79 @@ class Game:
     def is_game_over(self):
         if self.strikes >= 4:
             return True
-        
         num_locked_rows = 0
-
         for row in self.board:
             if row.is_locked:
                 num_locked_rows += 1
-        
         if num_locked_rows >= 2:
             return True
-
         return False
     
-            
+    
+    # def draw_modal(self, message="", width=500, height=500):
+    #     # if self.show_modal:
+    #     print("in modal draw")
+    #     modal_surface = pygame.Surface((width, height), pygame.SRCALPHA)
+    #     pygame.draw.rect(modal_surface, (0, 0, 0, 128), (0, 0, width, height))  # Semi-transparent background
+    #     modal_text = FONT.render("message", True, WHITE)
+    #     modal_rect = modal_text.get_rect(center=(width // 2, height // 2))
+    #     modal_surface.blit(modal_text, modal_rect)
+    #     self.screen.blit(modal_surface, (0, 0))
+    
+
+    def check_valid_cells(self):
+
+        all_invalid = True
+
+        for i in range(2):
+            white_die = self.active_dice[i]
+            for j in range(3, 6):
+                print("j", j)
+                colored_die = self.active_dice[j]
+                
+                sum = white_die.get_value() + colored_die.get_value()
+                color = colored_die.get_color()
+
+                for row in self.board:
+                    for cell in row.cells:
+                        if cell.number == sum and color == cell.color and cell.is_active:
+                            all_invalid = False
+                
+       
+    
+        invalid = True
+        for cell in self.valid_cells:
+            if cell.is_active:
+                invalid = False
+        
+        
+        if all_invalid and invalid:
+            print("all invalid")
+            return 3
+        elif invalid:
+            print("invalid whites")
+            return 1
+        elif all_invalid:
+            print("invalid colors")
+            return 2
+        else:
+            print("valid")
+            return 0
 
     def cross_out_cell(self):
         if self.selected_hit_box:
             for cell in self.valid_cells:
-                if self.selected_hit_box[1] == cell[1] and self.selected_hit_box[2] == cell[2]:
+                if self.selected_hit_box[1] == cell.x and self.selected_hit_box[2] == cell.y:
                     try: 
                         self.deactivate_cells()
+                        
                         self.selected_dice = [None, None]
-                        self.valid_cells = []
                         return True
-                        
-                        
                     except InvalidDeactivate as e:
                         print(f"CustomError: {e}")
-                        self.error_message = e
                         return False
                     except InadequateChecks as e:
                         print(f"CustomError: {e}")
-                        self.error_message = e
-                        return False
-                    else:
                         return False
 
     def run(self):
@@ -420,31 +453,66 @@ class Game:
 
         # Main game loop
         running = True
+
+        test = True
+
+        skip_second = False
+
+        made_selection = False
+
         
-        redraw = False
+        redraw = True
         while running:
             for event in pygame.event.get():
-                # print(self.game_state)
                 if event.type == pygame.QUIT:
                     running = False
 
                 if self.game_state == GameState.ROLL_DICE:
-                    self.instruction_text = "Press SPACEBAR to roll dice."
+
+                    if test:
+                        redraw = True
+                        self.instruction_text = "Hit SPACEBAR to roll dice"
+                        self.valid_cells = []
+                        self.selected_hit_box = None
+                        self.selected_dice = [None, None]
+                        test = False
+
+
+
                     if event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_SPACE:
                             self.roll_dice()
+                            
+
                             self.game_state = GameState.OPTIONAL_SELECTION
-                    redraw = True
-
-
-
-
-
+                            test = True
+                        redraw = True
                 elif self.game_state == GameState.OPTIONAL_SELECTION:
+                    
+                    if test:
+                        test = False
+                        self.instruction_text = "OPTIONAL: USE THE SUM OF THE WHITE DICE TO SELECT A NUMBER TO CHECK OFF"
+                        self.selected_dice = [1, 2]
+                        self.highlight_valid_cells()
+                        status = self.check_valid_cells()
+                        if status == 3:
+                            self.strikes += 1
 
-                    self.instruction_text = "OPTIONAL: USE THE SUM OF THE WHITE DICE TO SELECT A NUMBER TO CHECK OFF"
-                    self.selected_dice = [1, 2]
-                    self.highlight_valid_cells()
+                            if self.is_game_over():
+                                self.game_state = GameState.GAME_OVER
+                                test = True
+                            else:
+                                self.game_state = GameState.ROLL_DICE
+                                
+                                test = True
+                        # elif status == 1:
+                        #     self.game_state = GameState.COLOR_SELECTION
+                        #     test = True
+                        # elif status == 2:
+                        #     skip_second = True
+                        redraw = True
+                        
+                    # self.highlight_valid_cells()
 
                     if event.type == pygame.MOUSEBUTTONDOWN:
                         if self.hit_boxes:
@@ -453,101 +521,108 @@ class Game:
                                 if hit_box.collidepoint(x, y):
                                     self.selected_hit_box = (hit_box, xcord, ycord, row, column)
                                     redraw = True
+
+
                     elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_RETURN:
                             if self.cross_out_cell():
-                                self.game_state = GameState.COLOR_SELECTION
-
-                            
-                            
-                           
+                                made_selection = True
+                                self.valid_cells = []
+                                if skip_second:
+                                    self.game_state = GameState.ROLL_DICE
+                                    skip_second = False
+                                else:
+                                    self.game_state = GameState.COLOR_SELECTION
+                                redraw = True
+                                test = True
 
                         elif event.key == pygame.K_SPACE:
                             self.game_state = GameState.COLOR_SELECTION
                             self.selected_dice = [None, None]
-                            redraw = True
                             self.valid_cells = []
+                            redraw = True
+                            test = True
+
+
+                        
                             
 
                 elif self.game_state == GameState.COLOR_SELECTION:
-                    
-                    self.instruction_text = "Please select one white dice and one colored dice"
-                    redraw = True
+
+                    if test:
+                        redraw = True
+                        self.instruction_text = "Please select one white dice and one colored dice"
+                        test = False
 
                     if event.type == pygame.MOUSEBUTTONDOWN:
+                        # player clicks on either the score numbers or dice
+
+
                         x, y = event.pos
+                        # if die is hit
                         for hit_box, die_id, value in self.dice_hit_boxes:
                             if hit_box.collidepoint(x, y):
                                 self.set_selected(die_id)
-                        self.highlight_valid_cells()
+                                self.highlight_valid_cells()
+                                redraw = True
+                        
 
                         if self.hit_boxes:
                             x, y = event.pos
+                            #  if number is hit
                             for hit_box, xcord, ycord, row, column in self.hit_boxes:
                                 if hit_box.collidepoint(x, y):
                                     self.selected_hit_box = (hit_box, xcord, ycord, row, column)
+                                    
                                     redraw = True
+
                     elif event.type == pygame.KEYDOWN:
                         if event.key == pygame.K_RETURN:
-                            if self.selected_hit_box is not None and len(self.valid_cells) > 0 and self.selected_hit_box[1] == self.valid_cells[0][1] and self.selected_hit_box[2] == self.valid_cells[0][2]:
+                            if self.selected_hit_box is not None and len(self.valid_cells) > 0 and self.selected_hit_box[1] == self.valid_cells[0].x and self.selected_hit_box[2] == self.valid_cells[0].y:
                                 try: 
                                     self.deactivate_cells()
                                     self.clear_warning_and_error_messages()
+                                    print(self.valid_cells)
+
                                     if self.is_game_over():
                                         self.game_state = GameState.GAME_OVER
+                                        test = True
                                     else:
                                         self.game_state = GameState.ROLL_DICE
+                                        test = True
+
+
                                     redraw = True
                                 except InvalidDeactivate as e:
-                                    print(f"CustomError: {e}")
-                                    self.error_message = e
+                                    print(f"CustomError: {e}")                              
                                 except InadequateChecks as e:
                                     print(f"CustomError: {e}")
                             else:
                                 self.warning_text = "Please select one of the valid squares"
-                            
+                        if event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_SPACE:
+
+                                if made_selection == False:
+                                    self.strikes += 1
+
+                                if self.is_game_over():
+                                    self.game_state = GameState.GAME_OVER
+                                    test = True
+                                else:
+                                    self.game_state = GameState.ROLL_DICE
+                                    test = True
                     
                 elif self.game_state == GameState.GAME_OVER:
-                    self.instruction_text = "Game over."
-                    redraw = True
-                
-                # if event.type == pygame.MOUSEBUTTONDOWN:
-                #     if self.hit_boxes:
-                #         x, y = event.pos
-                #         for hit_box, xcord, ycord, row, column in self.hit_boxes:
-                #             if hit_box.collidepoint(x, y):
-                #                 self.selected_hit_box = (hit_box, xcord, ycord, row, column)
-                #                 print(f"Clicked on number {row} in row {column}")
-                #                 redraw = True
-                #     if self.dice_hit_boxes:
-                #         for hit_box, die_id, value in self.dice_hit_boxes:
-                #             if hit_box.collidepoint(x, y):
-                #                 print(f"color: {die_id}, value: {value}")
+                    if test:
+                        self.instruction_text = "Game over."
+                        redraw = True
 
-                #                 if die_id in self.selected_dice:
-                #                     self.set_selected(die_id, True)
-                #                 else:
-                #                     self.set_selected(die_id)
-        
-                #                 redraw = True
-                # elif event.type == pygame.KEYDOWN:
-                #     if event.key == pygame.K_DOWN:
-                #         pass
-                #     if event.key == pygame.K_RETURN:
-                #         if self.selected_hit_box:
-                #             try: 
-                #                 self.deactivate_cells()
-                #             except InvalidDeactivate as e:
-                #                 print(f"CustomError: {e}")
-                #                 self.error_message = e
-                #             except InadequateChecks as e:
-                #                 print(f"CustomError: {e}")
-                #                 self.error_message = e
-                
             # Draw the board and store hit boxes once
-            if not self.hit_boxes or redraw or not self.dice_hit_boxes:
-                self.hit_boxes, self.dice_hit_boxes = self.draw_board()
-            redraw = False
+                # if not self.hit_boxes or redraw or not self.dice_hit_boxes:
+                if redraw:
+                    print("redraw?")
+                    self.hit_boxes, self.dice_hit_boxes = self.draw_board()
+                redraw = False
 
         # Quit Pygame
         pygame.quit()
