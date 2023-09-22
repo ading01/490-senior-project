@@ -158,8 +158,14 @@ class Row:
     def display_row(self, screen):
         hit_boxes = []
         pygame.draw.rect(screen, GREY, (self.x - 5, self.y - 5, 850, 70))
-        # if self.is_locked:
-        pygame.draw.rect(screen, self.rgb, (self.x + 780, self.y , 60, 40))
+        if self.is_locked:
+            new_rgb = (180 if self.rgb[0] == 255 else 0,
+                        180 if self.rgb[1] == 255 else 0,
+                        180 if self.rgb[2] == 255 else 0)
+            pygame.draw.rect(screen, new_rgb, (self.x + 780, self.y , 60, 40))
+        else:
+            pygame.draw.rect(screen, self.rgb, (self.x + 780, self.y , 60, 40))
+
         for cell in self.cells:
             hit_boxes.append(cell.draw_cell(screen))
         return hit_boxes
@@ -542,11 +548,6 @@ class Game:
                             self.valid_cells = []
                             redraw = True
                             test = True
-
-
-                        
-                            
-
                 elif self.game_state == GameState.COLOR_SELECTION:
 
                     if test:
@@ -583,6 +584,7 @@ class Game:
                                     self.deactivate_cells()
                                     self.clear_warning_and_error_messages()
                                     print(self.valid_cells)
+                                    made_selection = False
 
                                     if self.is_game_over():
                                         self.game_state = GameState.GAME_OVER
@@ -604,7 +606,8 @@ class Game:
 
                                 if made_selection == False:
                                     self.strikes += 1
-
+                                
+                                made_selection = False
                                 if self.is_game_over():
                                     self.game_state = GameState.GAME_OVER
                                     test = True
@@ -616,6 +619,7 @@ class Game:
                     if test:
                         self.instruction_text = "Game over."
                         redraw = True
+                        test = False
 
             # Draw the board and store hit boxes once
                 # if not self.hit_boxes or redraw or not self.dice_hit_boxes:
