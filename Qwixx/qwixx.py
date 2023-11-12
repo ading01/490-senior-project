@@ -10,7 +10,10 @@ import pygame
 pygame.init()
 FONT = pygame.font.Font(None, 36)
 INSTRUCTION_FONT = pygame.font.Font(None, 40)
-CPU_WAIT_TIME = 0.5
+
+CPU_WAIT_TIME = 0
+DO_DRAW = False
+PRINT_STUFF = False
 
 # Color constants
 WHITE = (255, 255, 255)
@@ -168,7 +171,7 @@ class HumanPlayer(Player):
     def roll_dice(self, game):
 
         making_move = True
-        print(game.get_state())
+        my_print(game.get_state())
 
         while making_move:
             for event in pygame.event.get():
@@ -185,7 +188,7 @@ class HumanPlayer(Player):
         making_move = True
         game.selected_dice = [None, None]
         game.draw_game()
-        print(game.get_state())
+        my_print(game.get_state())
 
         while making_move:
             for event in pygame.event.get():
@@ -201,7 +204,7 @@ class HumanPlayer(Player):
                     if self.qwixx_card.cell_hit_boxes:
                         for hit_box, cell in self.qwixx_card.cell_hit_boxes:
                             if hit_box.collidepoint(x, y):
-                                print("row column", cell.row, cell.column)
+                                my_print("row column", cell.row, cell.column)
                                 self.qwixx_card.selected_cell = cell  # Update selected_cell with coordinates
                                 game.draw_game()
                 elif event.type == pygame.KEYDOWN:
@@ -215,10 +218,10 @@ class HumanPlayer(Player):
                                 game.selected_dice = [None, None]
                                 making_move = False
                             except InvalidDeactivate as e:
-                                print(f"CustomError: {e}")
+                                my_print(f"CustomError: {e}")
                                 game.warning_text = "WARNING"
                             except InadequateChecks as e:
-                                print(f"CustomError: {e}")
+                                my_print(f"CustomError: {e}")
                                 return False
                             game.draw_game()
                     elif event.key == pygame.K_SPACE:
@@ -232,7 +235,7 @@ class HumanPlayer(Player):
         card = self.qwixx_card
         # card.select_valid_cells(game.dice[0], game.dice[1])
         # game.draw_game()
-        print(game.get_state())
+        my_print(game.get_state())
         while making_move:
             for event in pygame.event.get():
                 # on mouseclick - select cell
@@ -241,7 +244,7 @@ class HumanPlayer(Player):
                     if self.qwixx_card.cell_hit_boxes:
                         for hit_box, cell in card.cell_hit_boxes:
                             if hit_box.collidepoint(x, y):
-                                print("row column", cell.row, cell.column)
+                                my_print("row column", cell.row, cell.column)
                                 self.qwixx_card.selected_cell = cell  # Update selected_cell with coordinates
                                 game.draw_game()
                 if event.type == pygame.KEYDOWN:
@@ -252,10 +255,10 @@ class HumanPlayer(Player):
                                 self.is_made_move = True
                                 making_move = False
                             except InvalidDeactivate as e:
-                                print(f"CustomError: {e}")
+                                my_print(f"CustomError: {e}")
                                 self.qwixx_card.warning_text = "WARNING"
                             except InadequateChecks as e:
-                                print(f"CustomError: {e}")
+                                my_print(f"CustomError: {e}")
                                 return False
                             game.draw_game()
 
@@ -302,7 +305,7 @@ class HeuristicPlayer(Player):
         board = self.qwixx_card.board
         row = cell.row
         for box in board[row].cells:
-            if box.is_active and board[row].number_of_checks < 5:
+            if box.is_active:
                 return cell.column - box.column
         
         return 100
@@ -325,6 +328,7 @@ class HeuristicPlayer(Player):
         best_move = self.get_best_move(candidates)
 
         if best_move is None:
+            my_print("1: No best color move in color")
             time.sleep(CPU_WAIT_TIME)
             return
         
@@ -334,10 +338,10 @@ class HeuristicPlayer(Player):
                     self.qwixx_card.selected_cell = best_move[0]
                     self.qwixx_card.cross_out_cell()
                 except InadequateChecks:
-                    print("INADEQITE CHECKS")
+                    my_print("INADEQITE CHECKS")
                     return
                 except InvalidDeactivate:
-                    print("invalid deactivate")
+                    my_print("invalid deactivate")
                     return
                 finally:
                     time.sleep(CPU_WAIT_TIME)
@@ -349,15 +353,15 @@ class HeuristicPlayer(Player):
                 self.qwixx_card.cross_out_cell()
                 self.is_made_move = True
             except InadequateChecks:
-                print("INADEQITE CHECKS")
+                my_print("INADEQITE CHECKS")
                 return
             except InvalidDeactivate:
-                print("invalid deactivate")
+                my_print("invalid deactivate")
                 return
             finally:
                 time.sleep(CPU_WAIT_TIME)
         
-        # print("Color candidates: ", candidates)
+        # my_print("Color candidates: ", candidates)
         # max_checks = 0
         # choices = []
         # for candidate in candidates:
@@ -368,7 +372,7 @@ class HeuristicPlayer(Player):
         #     elif number_of_checks > max_checks:
         #         max_checks = number_of_checks
         #         choices = [candidate]
-        # print("colored choices", choices)
+        # my_print("colored choices", choices)
 
         
         # if len(choices) == 0:
@@ -376,11 +380,11 @@ class HeuristicPlayer(Player):
         # else:
         #     choice_int = random.randint(0, len(choices) - 1)
             
-        #     print("choice int",choice_int)
+        #     my_print("choice int",choice_int)
         #     choice = choices[choice_int]
 
             
-        #     print("valid cell", choice.color, choice.row, choice.column)
+        #     my_print("valid cell", choice.color, choice.row, choice.column)
         #     self.qwixx_card.selected_cell = choice
         #     self.qwixx_card.cross_out_cell()
         #     self.is_made_move = True
@@ -390,9 +394,10 @@ class HeuristicPlayer(Player):
     def get_best_move(self, cells):
         max_dist = 100  # can be any number greater than the number of cells per row
         candidates = []
+        my_print("len cells:", len(cells))
 
         if len(cells) == 0:
-            return
+            return None
 
         for valid_cell in cells:
             distance = self.distance_from_prev_crossed_out_cell(valid_cell)
@@ -402,10 +407,14 @@ class HeuristicPlayer(Player):
                 max_dist = distance
                 candidates = [(valid_cell, distance)]
         
+        my_print("max dist", max_dist)
         if max_dist > 4:
+            my_print(".   1. max dist")
             return None
         
         if len(candidates) == 0:
+            my_print(".   2. len(candidates) == 0")
+
             return None
 
         max_checks = 0
@@ -419,10 +428,12 @@ class HeuristicPlayer(Player):
                 max_checks = number_of_checks
                 choices = [candidate]
         if len(choices) == 0:
+            my_print(".     3. len(choices) == 0")
             return None
         else:
             choice_int = random.randint(0, len(choices) - 1)
             choice = choices[choice_int]
+            my_print(".      4. chioce: ", choice)
 
             return choice
             
@@ -438,6 +449,7 @@ class HeuristicPlayer(Player):
         best_optional_choice = self.get_best_move(optional_cells)
 
         if best_optional_choice is None:
+            my_print("2. no best optional move, skipping")
             time.sleep(CPU_WAIT_TIME)
             return
 
@@ -456,13 +468,14 @@ class HeuristicPlayer(Player):
 
             best_colored_choice = self.get_best_move(colored_cells)
             if best_colored_choice is None:
+
                 best_colored_choice = (0, 100000)
                 
 
 
             if best_colored_choice[1] < best_optional_choice[1]:
                 # skip
-                print("skipping on turn optional")
+                my_print("skipping on turn optional")
                 time.sleep(CPU_WAIT_TIME)
                 return
             else: 
@@ -471,7 +484,7 @@ class HeuristicPlayer(Player):
                     self.qwixx_card.cross_out_cell()
                     self.is_made_move = True
                 except InadequateChecks:
-                    print("inadequate checks")
+                    my_print("inadequate checks")
                     return
                 finally:
                     time.sleep(CPU_WAIT_TIME)
@@ -479,7 +492,7 @@ class HeuristicPlayer(Player):
         else:
             # if CPU does not need to move
             if best_optional_choice[1] < 2:
-                print("making optional move")
+                my_print("making optional move")
                 try:
                     self.qwixx_card.selected_cell = best_optional_choice[0]
                     self.qwixx_card.cross_out_cell()
@@ -593,11 +606,11 @@ class Row:
     
     def deactivate_trailing_cells(self, index):
         if self.cells[index].is_active:
-            print("index", index)
-            print(len(self.cells))
-            print(self.cells[index].number)
+            my_print("index", index)
+            my_print(len(self.cells))
+            my_print(self.cells[index].number)
 
-            if self.cells[index].number == 12 and self.number_of_checks < 5:
+            if self.cells[index] == 10 and self.number_of_checks < 5:
                 raise InadequateChecks()
             else:
                 self.cells[index].crossed_out = True
@@ -630,8 +643,9 @@ class QwixxCard:
                 if self.selected_cell == cell:
                     curr_row = cell.row
                     index = cell.column
+                    my_print("deactiviating index:", index)
                     self.board[curr_row].deactivate_trailing_cells(index)
-        print(f"{self.player_name}crossed out cell: ", self.selected_cell.row, self.selected_cell.column, self.selected_cell.number)
+        my_print(f"{self.player_name}crossed out cell: ", self.selected_cell.row, self.selected_cell.column, self.selected_cell.number)
 
     def select_valid_cells(self, dice1, dice2):
         total = dice1.get_value() + dice2.get_value()
@@ -659,8 +673,8 @@ class QwixxCard:
         return board
     
     def is_game_over(self):
-        # if self.strikes >= 4:
-        #     return True
+        if self.strikes >= 4:
+            return True
         
         # if two of the rows are locked
         locked_rows = 0
@@ -721,7 +735,7 @@ class QwixxCard:
         for row in self.board:
             total += SCORE_MAP[row.number_of_checks]
 
-        # total = total - (self.strikes * 5)
+        total = total - (self.strikes * 5)
         return total
 
 class QwixxGame:
@@ -846,35 +860,38 @@ class QwixxGame:
         pygame.draw.rect(surface, selected_color, (x - border_thickness, y - border_thickness, width + (2*border_thickness) , height + (2*border_thickness)), border_thickness)
     
     def draw_game(self):
-        # return
-        # display active player name
-        self.draw_cards()
-        self.dice_hit_boxes = self.draw_dice(screen)
-        active_player_text = f"The active player is player number {str(self.active_player)}, {self.players[self.active_player].name}"
-        active_player_label = FONT.render(active_player_text, True, BLACK)
-        
-        moving_player_text = f"The moving player is player number {str(self.moving_player)}, {self.players[self.moving_player].name}"
-        moving_player_label = FONT.render(moving_player_text, True, BLACK)
-        
-        instruction_label = INSTRUCTION_FONT.render("INSTRUCTION: " + self.instruction_text, True, BLACK, WHITE)
-        
-        warning_label = FONT.render(self.warning_text, True, BLACK)
+        if DO_DRAW:
+            # return
+            # display active player name
+            self.draw_cards()
+            self.dice_hit_boxes = self.draw_dice(screen)
+            active_player_text = f"The active player is player number {str(self.active_player)}, {self.players[self.active_player].name}"
+            active_player_label = FONT.render(active_player_text, True, BLACK)
+            
+            moving_player_text = f"The moving player is player number {str(self.moving_player)}, {self.players[self.moving_player].name}"
+            moving_player_label = FONT.render(moving_player_text, True, BLACK)
+            
+            instruction_label = INSTRUCTION_FONT.render("INSTRUCTION: " + self.instruction_text, True, BLACK, WHITE)
+            
+            warning_label = FONT.render(self.warning_text, True, BLACK)
 
-        game_state_label = FONT.render(f"STAGE: {self.game_state_text}", True, BLACK)
-        
+            game_state_label = FONT.render(f"STAGE: {self.game_state_text}", True, BLACK)
+            
 
-        screen.blit(game_state_label, (50,80))
-        screen.blit(active_player_label, (0, 0))
-        screen.blit(moving_player_label, (0, 20))
-        screen.blit(instruction_label, (0, 45))
-        screen.blit(warning_label, (0, 60))
-        if self.winner_text:
-            winner_label = FONT.render(f"WINNER: {self.winner_text}", True, BLACK)
-            screen.blit(winner_label, (100, 160))
-        
+            screen.blit(game_state_label, (50,80))
+            screen.blit(active_player_label, (0, 0))
+            screen.blit(moving_player_label, (0, 20))
+            screen.blit(instruction_label, (0, 45))
+            screen.blit(warning_label, (0, 60))
+            if self.winner_text:
+                winner_label = FONT.render(f"WINNER: {self.winner_text}", True, BLACK)
+                screen.blit(winner_label, (100, 160))
+            
 
-        # self.change_player_button.draw(screen)
-        pygame.display.flip()
+            # self.change_player_button.draw(screen)
+            pygame.display.flip()
+        else:
+            return
 
     def run(self):
         start_time = datetime.now()
@@ -984,8 +1001,11 @@ class QwixxGame:
 
         # Quit Pygame
         pygame.quit()
-        sys.exit()
+        # sys.exit()
 
+def my_print(text, *args):
+    if PRINT_STUFF:
+        print(text, args)
 
 if __name__ == "__main__":
     players = [HumanPlayer("Allan"), HeuristicPlayer("robot2")]

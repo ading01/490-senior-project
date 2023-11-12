@@ -55,9 +55,11 @@ def train():
     record = 0
     # agent = Agent()
     
-    players = [HumanPlayer("Allan"), HeuristicPlayer("robot2")]
+    players = [HeuristicPlayer("Allan"), HeuristicPlayer("robot2")]
     game = QwixxGame(players)
     game.run()
+    
+
     
 
 if __name__ == '__main__':
