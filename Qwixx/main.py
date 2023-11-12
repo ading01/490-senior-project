@@ -85,6 +85,32 @@ SCORE_MAP = {
 SCREEN_WIDTH, SCREEN_HEIGHT = 1000, 700
 FONT = pygame.font.Font(None, 36)
 
+class HumanPlayer:
+    def __init__(self, name):
+        self.name = name
+
+    def make_move(self, game):
+        # Handle user input for the human player's turn
+        # Update the game state accordingly
+        pass
+    
+class HeuristicPlayer:
+    def __init__(self):
+        self.is_made_move = False
+
+    def make_move(self, game):
+        if game.game_state == GameState.ROLL_DICE:
+            game.roll_dice()
+        elif game.game_state == GameState.OPTIONAL_SELECTION:
+            valid_cells = game.valid_cells
+            print(valid_cells)
+        elif game.game_state == GameState.COLOR_SELECTION:
+            pass
+        elif game.game_state == GameState.GAME_OVER:
+            pass
+
+
+
 class Die: 
     def __init__(self, die_id, color, sides=6):
         self.die_id = die_id
@@ -113,7 +139,7 @@ class Cell:
         self.x = x
         self.y = y
         self.rgb = rgb
-        self.color = color
+        self.color = color # "green", "red"
         self.is_active = True
 
     
@@ -187,7 +213,7 @@ class Row:
         
 
 class Game:
-    def __init__(self, screen_width=1000, screen_height=1000, font=pygame.font.Font(None, 36)):
+    def __init__(self, player_type="human", screen_width=1000, screen_height=1000, font=pygame.font.Font(None, 36)):
         self.dice = {
             1: Die(1, "white"),
             2: Die(2, "white"),
@@ -196,6 +222,7 @@ class Game:
             5: Die(5, "yellow"),
             6: Die(6, "green"),
         }
+        self.player_type = player_type
         self.hit_boxes = None
         self.dice_hit_boxes = None
         self.board = self.get_board()
@@ -297,30 +324,18 @@ class Game:
                             print(cell.number, cell.x, cell.y)
                             self.valid_cells = [cell]
 
-    # def draw_strike_box(self):
-
-
-
     # Define the game board
     def draw_board(self):
         self.screen.fill(WHITE)  # Fill the background with white
-
         # Define the colors for the rows
         row_colors = [RED, YELLOW, GREEN, BLUE]
-
         # Store hit boxes for each number and their associated row
         hit_boxes = []
         dice_hit_boxes = []
 
-
         hit_boxes = self.display_board()
         self.display_strikes()
 
-        # if self.warning_text is not None:
-        #     text_surface = FONT.render(f"{self.warning_text}", False, (0, 0, 0))
-        #     self.screen.blit(text_surface, (0,40))
-        
-        
         # press
 
         #score
@@ -334,15 +349,7 @@ class Game:
 
         if self.selected_hit_box is not None:
             self.draw_selected_border(BLACK, self.selected_hit_box[1], self.selected_hit_box[2], 60, 40)
-            
-
-
-        # if self.error_message is not None:
-        #     # my_font = pygame.font.SysFont('Comic Sans MS', 30)
-        #     text_surface = FONT.render(f"{self.error_message}", False, (0, 0, 0))
-        #     self.screen.blit(text_surface, (0,60))
-
-
+           
         x = 100
         y = 400
         new_width = 100
@@ -466,6 +473,9 @@ class Game:
 
         made_selection = False
 
+        heuristic_player = HeuristicPlayer()
+
+
         
         redraw = True
         while running:
@@ -475,6 +485,8 @@ class Game:
 
                 if self.game_state == GameState.ROLL_DICE:
 
+                    
+
                     if test:
                         redraw = True
                         self.instruction_text = "Hit SPACEBAR to roll dice"
@@ -483,16 +495,23 @@ class Game:
                         self.selected_dice = [None, None]
                         test = False
 
+                    
+                    if self.player_type == "human":
+                        if event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_SPACE:
+                                self.roll_dice()
+                                
 
-
-                    if event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_SPACE:
-                            self.roll_dice()
-                            
-
-                            self.game_state = GameState.OPTIONAL_SELECTION
-                            test = True
+                                self.game_state = GameState.OPTIONAL_SELECTION
+                                test = True
+                            redraw = True
+                    elif self.player_type == "heuristic":
+                        heuristic_player.make_move(self)
+                        test = True
                         redraw = True
+                        self.game_state = GameState.OPTIONAL_SELECTION
+
+
                 elif self.game_state == GameState.OPTIONAL_SELECTION:
                     
                     if test:
@@ -511,6 +530,7 @@ class Game:
                                 self.game_state = GameState.ROLL_DICE
                                 
                                 test = True
+                    
                         # elif status == 1:
                         #     self.game_state = GameState.COLOR_SELECTION
                         #     test = True
@@ -520,34 +540,41 @@ class Game:
                         
                     # self.highlight_valid_cells()
 
-                    if event.type == pygame.MOUSEBUTTONDOWN:
-                        if self.hit_boxes:
-                            x, y = event.pos
-                            for hit_box, xcord, ycord, row, column in self.hit_boxes:
-                                if hit_box.collidepoint(x, y):
-                                    self.selected_hit_box = (hit_box, xcord, ycord, row, column)
+                    if self.player_type == "human":
+
+                        if event.type == pygame.MOUSEBUTTONDOWN:
+                            if self.hit_boxes:
+                                x, y = event.pos
+                                for hit_box, xcord, ycord, row, column in self.hit_boxes:
+                                    if hit_box.collidepoint(x, y):
+                                        self.selected_hit_box = (hit_box, xcord, ycord, row, column)
+                                        redraw = True
+                        elif event.type == pygame.KEYDOWN:
+                            if event.key == pygame.K_RETURN:
+                                if self.cross_out_cell():
+                                    made_selection = True
+                                    self.valid_cells = []
+                                    if skip_second:
+                                        self.game_state = GameState.ROLL_DICE
+                                        skip_second = False
+                                    else:
+                                        self.game_state = GameState.COLOR_SELECTION
                                     redraw = True
-
-
-                    elif event.type == pygame.KEYDOWN:
-                        if event.key == pygame.K_RETURN:
-                            if self.cross_out_cell():
-                                made_selection = True
+                                    test = True
+                            elif event.key == pygame.K_SPACE:
+                                self.game_state = GameState.COLOR_SELECTION
+                                self.selected_dice = [None, None]
                                 self.valid_cells = []
-                                if skip_second:
-                                    self.game_state = GameState.ROLL_DICE
-                                    skip_second = False
-                                else:
-                                    self.game_state = GameState.COLOR_SELECTION
                                 redraw = True
                                 test = True
+                        
+                    elif self.player_type == "heuristic":
+                        heuristic_player.make_move(self)
+                        test = True
+                        redraw = True
+                        self.game_state = GameState.COLOR_SELECTION
 
-                        elif event.key == pygame.K_SPACE:
-                            self.game_state = GameState.COLOR_SELECTION
-                            self.selected_dice = [None, None]
-                            self.valid_cells = []
-                            redraw = True
-                            test = True
+
                 elif self.game_state == GameState.COLOR_SELECTION:
 
                     if test:
@@ -634,7 +661,9 @@ class Game:
 
 
 if __name__ == '__main__':
-    game = Game(SCREEN_WIDTH, SCREEN_HEIGHT)
+    # game = Game("human",SCREEN_WIDTH, SCREEN_HEIGHT)
+    game = Game("heuristic",SCREEN_WIDTH, SCREEN_HEIGHT)
+
     game.run()
     
 

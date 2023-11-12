@@ -5,6 +5,10 @@ name = "pypi"
 
 [packages]
 pygame = "*"
+torch = "*"
+torchvision = "*"
+numpy = "*"
+black = "*"
 
 [dev-packages]
 
