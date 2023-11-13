@@ -180,8 +180,7 @@ class HumanPlayer(Player):
                         if event.key == pygame.K_SPACE:
                             game.roll_dice()
                             game.draw_game()
-                            making_move = False
-        
+                            making_move = False        
 
     def make_color_move(self, game):
 
@@ -359,37 +358,7 @@ class HeuristicPlayer(Player):
                 my_print("invalid deactivate")
                 return
             finally:
-                time.sleep(CPU_WAIT_TIME)
-        
-        # my_print("Color candidates: ", candidates)
-        # max_checks = 0
-        # choices = []
-        # for candidate in candidates:
-        #     row_number = candidate.row
-        #     number_of_checks = self.qwixx_card.board[row_number].number_of_checks
-        #     if number_of_checks == max_checks:
-        #         choices.append(candidate)
-        #     elif number_of_checks > max_checks:
-        #         max_checks = number_of_checks
-        #         choices = [candidate]
-        # my_print("colored choices", choices)
-
-        
-        # if len(choices) == 0:
-        #     return
-        # else:
-        #     choice_int = random.randint(0, len(choices) - 1)
-            
-        #     my_print("choice int",choice_int)
-        #     choice = choices[choice_int]
-
-            
-        #     my_print("valid cell", choice.color, choice.row, choice.column)
-        #     self.qwixx_card.selected_cell = choice
-        #     self.qwixx_card.cross_out_cell()
-        #     self.is_made_move = True
-            
-        
+                time.sleep(CPU_WAIT_TIME)      
 
     def get_best_move(self, cells):
         max_dist = 100  # can be any number greater than the number of cells per row
@@ -414,7 +383,6 @@ class HeuristicPlayer(Player):
         
         if len(candidates) == 0:
             my_print(".   2. len(candidates) == 0")
-
             return None
 
         max_checks = 0
