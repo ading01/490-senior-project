@@ -37,7 +37,7 @@ class Agent(Player):
         self.trainer.train_step(states, actions, rewards, next_states, dones)
 
     def train_short_memory(self, state, action, reward, next_state, done):
-        self.trainer.train_step(state, action, reward, next_state, done):
+        self.trainer.train_step(state, action, reward, next_state, done)
     
     def get_action(self, state):
         # random moves: tradeoff exploration / exploitation
@@ -48,7 +48,7 @@ class Agent(Player):
             final_move[move] = 1
         else: 
             state0 = torch.tensor(state, dtype=torch.float)
-            prediction = self.model.predict(state0)
+            prediction = self.model(state0)
             move = torch.argmax(prediction).item()
             final_move[move] = 1
 
@@ -60,33 +60,34 @@ def train():
     total_score = 0
     record = 0
     agent = Agent()
-    players = [HeuristicPlayer("Allan"), HeuristicPlayer("robot2")]
+    players = [HumanPlayer("Allan"), HeuristicPlayer("robot2")]
     game = QwixxGame(players)
+    game.run()
 
-    while True:
-        state_old = agent.get_state(game)
+    # while True:
+    #     state_old = agent.get_state(game)
 
-        final_move = agent.get_action(state_old)
+    #     final_move = agent.get_action(state_old)
 
-        reward, done, score = game.play_step(final_move)
+    #     reward, done, score = game.play_step(final_move)
 
-        state_new = agent.get_state(game)
+    #     state_new = agent.get_state(game)
 
-        agent.train_short_memory(state_old, final_move, reward, state_new, done)
+    #     agent.train_short_memory(state_old, final_move, reward, state_new, done)
 
-        agent.remember(state_old, final_move, reward, state_new, done)
+    #     agent.remember(state_old, final_move, reward, state_new, done)
 
-        if done:
-            # train long memory / replay memory
-            game.reset()
-            agent.n_games += 1
-            agent.train_long_memory()
+        # if done:
+        #     # train long memory / replay memory
+        #     game.reset()
+        #     agent.n_games += 1
+        #     agent.train_long_memory()
 
-            if score > record:
-                record = score
-                # agent.model.save()
+        #     if score > record:
+        #         record = score
+        #         # agent.model.save()
             
-            print("Game", agent.n_games, "Score", score, "Record", record)
+        #     print("Game", agent.n_games, "Score", score, "Record", record)
 
             # plot
 

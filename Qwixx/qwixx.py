@@ -12,7 +12,7 @@ FONT = pygame.font.Font(None, 36)
 INSTRUCTION_FONT = pygame.font.Font(None, 40)
 
 CPU_WAIT_TIME = 0
-DO_DRAW = False
+DO_DRAW = True
 PRINT_STUFF = False
 
 # Color constants
@@ -188,6 +188,7 @@ class HumanPlayer(Player):
         game.selected_dice = [None, None]
         game.draw_game()
         my_print(game.get_state())
+        print(game.get_state())
 
         while making_move:
             for event in pygame.event.get():
@@ -235,6 +236,7 @@ class HumanPlayer(Player):
         # card.select_valid_cells(game.dice[0], game.dice[1])
         # game.draw_game()
         my_print(game.get_state())
+        print(game.get_state())
         while making_move:
             for event in pygame.event.get():
                 # on mouseclick - select cell
@@ -742,12 +744,23 @@ class QwixxGame:
             "active_player": self.active_player,
             "game_state": self.game_state, # this should be an ENUM of either 1 or 2, but
             # will probably be adjusted to be one-indexed (i.e. 0 or 1)
-            "already_moved": self.players[self.active_player].is_made_move,
+            "already_moved": self.players[0].is_made_move,
             "valid_cells": self.get_valid_cells(),
-            "selectable_cells": self.get_selectable_cells()
+            "num_crossed_out_cells": self.get_num_crossed_out_cells(),
+            "selectable_cells": self.get_selectable_cells(),
+            "strikes": self.players[0].qwixx_card.strikes
 
         }
         return state
+    
+    def get_num_crossed_out_cells(self):
+        res = []
+        board = self.players[0].get_card().board
+
+        for row in board:
+            res.append(row.number_of_checks)
+        
+        return res
 
     def get_valid_cells(self):
         board = []
