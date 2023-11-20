@@ -1,126 +1,93 @@
-import math
-import sys
-import time
-
-import numpy as np
-
-actions = [0, 1, 2, 3, 4, 5, 6, 7, 8]
-
-def getRightMostInactiveCellInRow(state, action, row_index):
-    board = state['valid_cells']
-    row = board[row_index]
-    for i in range(len(row)):
-        if row[i] == 0:
-            return i / 11
-    return 1
-
-# def getTotalMarkedCellsInRow(state, action, color):
-#     pass
-
-def getTotalCellsMissed(state, action, features):
-    # get index of most right inactive cell
-    
-    def get_left_and_right_indices(row):
-        l = 12
-        r = 12
-
-        for i in range(len(row)):
-            if row[i] == 1 and l == 12:
-                l = i
-                r = i
-            elif row[i] == 1:
-                r = i
-        
-        return l, r
-    
-    board = state['selectable_cells']
-    row = board[action // 2]
-    l, r = get_left_and_right_indices(row)
-    print("left, right", l, r)
-    right_most_inactive_cell_in_row = features[action // 2] * 11
+from function import *
 
 
-    if action % 2 == 0:
-        if r - right_most_inactive_cell_in_row >= 0:
-            return r - right_most_inactive_cell_in_row 
-        else:
-            return 12
-    else:
-        # left
-        if l - right_most_inactive_cell_in_row >= 0:
-            return l - right_most_inactive_cell_in_row
-        else:
-            return 12
-        
+# /////////////////////////// TESTS ///////////////////////////
+def test_get_right_index(row=[0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]):
+    ind = get_right_index(row)
+    assert ind == 5, "get_right_index() failed" 
+    assert get_right_index([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]) == 10, "get_right_index() failed"
 
-def willActionResultInLock(state, action):
-    pass
+def test_get_left_index(row=[0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]):
+    ind = get_left_index(row)
+    assert ind == 5, "get_left_index() failed"
+    assert get_left_index([1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) == 0, "get_right_index() failed"
+    assert get_left_index([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]) == 10, "get_right_index() failed"
+    assert get_left_index([0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0]) == 2, "get_right_index() failed"
 
-def willActionResultInFirstStrike(state, action):
-    pass
+def test_locking_second_row_ends_game():
+    state = {
+        'active_player': 0,
+        'game_state': 2,
+        'already_moved': False,
+        'valid_cells': [
+            [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ],
+        'num_crossed_out_cells': [4, 3, 5, 0],
+        'selectable_cells': [
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+        ],
+        'strikes': 3,
+        "locked_rows": 1
+    }
+    action = 5
+    assert create_feature_list(state, action)[14] == 1, "test_locking_second_row_ends_game() failed"
+    assert create_feature_list(state, 4)[14] == 0
 
-def willActionResultInSecondStrike(state, action):
-    pass
+def test_action_8_ends_game_by_strike():
+    state = {
+        'active_player': 0,
+        'game_state': 2,
+        'already_moved': False,
+        'valid_cells': [
+            [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ],
+        'num_crossed_out_cells': [11, 3, 5, 5],
+        'selectable_cells': [
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+        ],
+        'strikes': 3,
+        "locked_rows": 1
+    }
+    assert create_feature_list(state, 8)[14] == 1, "test_action_8_ends_game_by_strike() failed"
 
-def willActionResultInThirdStrike(state, action):
-    pass
+def test_is_valid_action():
+    state = {
+        'active_player': 0,
+        'game_state': 2,
+        'already_moved': False,
+        'valid_cells': [
+            [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ],
+        'num_crossed_out_cells': [11, 3, 5, 5],
+        'selectable_cells': [
+            [0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
+        ],
+        'strikes': 3,
+        "locked_rows": 1
+    }
+    # pass is valid
+    assert create_feature_list(state, 8)[16] == 1, "test_is_valid_action() failed"
+    assert create_feature_list(state, 4)[16] == 0, "test left ind is not valid"
+    assert create_feature_list(state, 5)[16] == 0, "test right is not valid"
+    assert create_feature_list(state, 0)[16] == 0, "test left is not valid"
+    assert create_feature_list(state, 1)[16] == 1, "test right is valid"
 
-def willActionResultInFourthStrike(state, action):
-    pass
-
-def willActionEndGame(state, action):
-    pass
-
-def isCellSelectable(state, action, row, column):
-    pass
-
-functions_list = [getRightMostInactiveCellInRow, getTotalCellsMissed, willActionResultInLock, willActionResultInFirstStrike, willActionResultInSecondStrike, willActionResultInThirdStrike, willActionResultInFourthStrike, willActionEndGame]
-
-test_state = []
-
-data = {
-    'active_player': 0,
-    'game_state': 2,
-    'already_moved': False,
-    'valid_cells': [
-        [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
-        [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
-        [1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ],
-    'num_crossed_out_cells': [11, 3, 4, 5],
-    'selectable_cells': [
-        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-    ],
-    'strikes': 2
-}
-
-def create_feature_list(state, action):
-    features = []
-    colors = ["red", "yellow", "green", "blue"]
-
-    for row_index in range(4):
-        right_most_inactive_cell_in_row = getRightMostInactiveCellInRow(state, action, row_index)
-        features.append(right_most_inactive_cell_in_row)
-
-    num_marked_cells = [num / 11 for num in state['num_crossed_out_cells'] ]
-    features.extend(num_marked_cells)
-
-    features.append(getTotalCellsMissed(state, action, features))
-
-    # for row_index in range(4):
-    #     total_cells_missed = getTotalCellsMissed(state, action, features[row_index])
-    #     features.append(total_cells_missed)
-    
-    return features
-
-def try_this():
-    print(data['active_player'])
-    
-
-if __name__ == "__main__":
-    print(create_feature_list(data, action=1))
-    # try_this()
+# //////////END TESTS //////////
