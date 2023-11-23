@@ -10,6 +10,8 @@ torchvision = "*"
 numpy = "*"
 black = "*"
 pytest = "*"
+helper = "*"
+matplotlib = "*"
 
 [dev-packages]
 

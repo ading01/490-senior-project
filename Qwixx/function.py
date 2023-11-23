@@ -239,7 +239,7 @@ def create_feature_list(state, action):
     features.append(is_trying_to_lock(state, action))
     features.append(is_valid_action(state, action))
     features.append(state["active_player"])
-    features.append(state["game_state"])
+    features.append(state["game_state"].value)
     features.append(state["already_moved"])
     features.append(state["locked_rows"])
 
