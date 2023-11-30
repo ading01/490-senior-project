@@ -11,16 +11,15 @@ from qwixx import *
 # from helper import plot
 
 
-GAMES = 1000
+GAMES = 300000
 
 class QAgent(Player):
     def __init__(self, name):
         super().__init__(name)
         self.n_games = 0
         self.epsilon = 0
-        self.gamma = 0.4
-        self.learning_rate = 0.1
-        self.weights = [0 for i in range(21)]
+        self.gamma = 0.99
+        self.weights = [0 for i in range(len(functions))]
     
 
     def get_state(self, game):
@@ -166,7 +165,7 @@ class QAgent(Player):
     def update_weights(self, reward, curr_state, action, new_state):
         features = create_feature_list(curr_state, action)
         for i in range(len(self.weights)):
-            self.weights[i] = self.weights[i] + self.learning_rate * (reward + self.gamma * self.getMaxQValue(new_state) - self.getQValue(curr_state, action)) * features[i]
+            self.weights[i] = self.weights[i] + (1 / (self.n_games + 1)) * (reward + self.gamma * self.getMaxQValue(new_state) - self.getQValue(curr_state, action)) * features[i]
         
 
 
@@ -226,19 +225,17 @@ def train():
     mean_scores = []
 
     while n_games < GAMES:
-        game = QwixxGame([HeuristicPlayer("Allan"), qAgent])
+        game = QwixxGame([HumanPlayer("Robot"), qAgent])
         game.run()
         score = game.players[1].qwixx_card.calculate_score()
-        print("game number", n_games, game.players[1].name, "score", score)
+        # print("game number", n_games, game.players[1].name, "score", score)
         total_score += score
         all_scores.append(score)
         games.append(n_games)
         n_games += 1
     
-
         mean_scores.append(total_score / n_games)
         
-        # plt.plot(games, mean_scores, "-")
         qAgent.player_reset()
     plt.plot(all_scores, color = 'r')
     plt.plot(mean_scores, color = 'b')

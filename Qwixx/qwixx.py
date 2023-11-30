@@ -12,7 +12,7 @@ FONT = pygame.font.Font(None, 36)
 INSTRUCTION_FONT = pygame.font.Font(None, 40)
 
 CPU_WAIT_TIME = 0
-DO_DRAW = False
+DO_DRAW = True
 PRINT_STUFF = False
 
 # Color constants
@@ -574,6 +574,9 @@ class Player:
         self.player_surface = None
         self.is_made_move = False
     
+    def get_player_score(self):
+        return self.qwixx_card.score
+    
     def get_card(self):
         return self.qwixx_card
     
@@ -626,7 +629,7 @@ class HumanPlayer(Player):
         making_move = True
         game.selected_dice = [None, None]
         game.draw_game()
-        # print(game.get_state())
+        print(game.get_state())
 
         while making_move:
             for event in pygame.event.get():
@@ -670,6 +673,7 @@ class HumanPlayer(Player):
 
         making_move = True
         card = self.qwixx_card
+        print(game.get_state())
         while making_move:
             for event in pygame.event.get():
                 # on mouseclick - select cell
@@ -1152,6 +1156,7 @@ class QwixxCard:
             total += SCORE_MAP[row.number_of_checks]
 
         total = total - (self.strikes * 5)
+        self.score = total
         return total
 
 class QwixxGame:
@@ -1196,6 +1201,8 @@ class QwixxGame:
             "selectable_cells": self.get_selectable_cells(),
             "strikes": self.players[self.moving_player].qwixx_card.strikes, 
             "locked_rows": self.get_locked_rows(),
+            "player_score": self.players[1].get_player_score(),
+            "opponent_score": self.players[0].get_player_score()
 
         }
         return state
@@ -1416,7 +1423,7 @@ class QwixxGame:
                 self.winner_text = winner.name
                 end_time = datetime.now()
                 time_diff = end_time - start_time
-                print("total time", time_diff, "winner:", winner.name, max_score)
+                # print("total time", time_diff, "winner:", winner.name, max_score)
                 running = False
                 if redraw: 
                     self.draw_game()
