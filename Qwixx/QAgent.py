@@ -11,14 +11,26 @@ from qwixx import *
 # from helper import plot
 
 
-GAMES = 300000
+GAMES = 100000
+
+HUMAN_PRINT = False
+
+def human_print(string, *args):
+    if HUMAN_PRINT:
+        print(string, args)
 
 class QAgent(Player):
     def __init__(self, name):
         super().__init__(name)
+        self.action_counts = [0 for i in range(9)]
+        self.n_explores = 0
+        self.n_exploits = 0
         self.n_games = 0
+        self.invalid_moves = 0
+        self.learning_rate = 0.001
         self.epsilon = 0
         self.gamma = 0.99
+        self.step = 0.0001
         self.weights = [0 for i in range(len(functions))]
     
 
@@ -26,6 +38,10 @@ class QAgent(Player):
         return game.get_state()
 
     def player_reset(self):
+        self.n_explores = 0
+        self.invalid_moves = 0
+        self.n_exploits = 0
+        self.action_counts = [0 for i in range(9)]
         self.qwixx_card = QwixxCard(self.name)
         self.is_made_move = False
     
@@ -114,15 +130,11 @@ class QAgent(Player):
         
         time.sleep(CPU_WAIT_TIME)
         
-    
-                
 
-
-
-        
-    
-    
     def make_move(self, game, curr_state, action):
+        # print("\n")
+        # print(game.get_state())
+        self.action_counts[action] += 1
         
         if action == 8:
             curr_state = game.get_state()
@@ -134,6 +146,7 @@ class QAgent(Player):
             
             # TODO: FIX THIS should also update on skip
             # maybe add keyword argument
+            human_print("reward", reward)
             new_state = game.get_state() 
             self.update_weights(reward, curr_state, action, new_state)
             return
@@ -152,20 +165,24 @@ class QAgent(Player):
             self.is_made_move = True
         except InadequateChecks:
             # print("inadequate checks")
+            self.invalid_moves += 1
             reward = -40
         except InvalidDeactivate:
             # print("invalid deactivate")
+            self.invalid_moves += 1
             reward = -40
         finally:
-            # print("reward", reward)
+            human_print("reward", reward)
             new_state = game.get_state() 
             self.update_weights(reward, curr_state, action, new_state)
+            # print(self.weights)
             return
         
     def update_weights(self, reward, curr_state, action, new_state):
-        features = create_feature_list(curr_state, action)
+        features, feature_values = create_feature_list(curr_state, action)
+        human_print(feature_values)
         for i in range(len(self.weights)):
-            self.weights[i] = self.weights[i] + (1 / (self.n_games + 1)) * (reward + self.gamma * self.getMaxQValue(new_state) - self.getQValue(curr_state, action)) * features[i]
+            self.weights[i] = self.weights[i] + self.learning_rate * (reward + self.gamma * self.getMaxQValue(new_state) - self.getQValue(curr_state, action)) * features[i]
         
 
 
@@ -176,15 +193,18 @@ class QAgent(Player):
         # epsilon starts at zero and then increases over time
 
         if random.randint(0, 100) > self.epsilon:
-            # print("explore")
+            human_print("explore")
+            self.n_explores += 1
             final_move = randint(0, 8)
             # print("final move", final_move)
         else:
-            # print("exploit")
+            human_print("exploit")
+            self.n_exploits += 1
             final_move = self.getMaxAction(state)
             # exploit
         
-        self.epsilon = self.epsilon + 0.001
+        self.epsilon = self.epsilon + self.step
+        human_print("making move", final_move)
         return final_move
     
     def getMaxQValue(self, state):
@@ -198,7 +218,7 @@ class QAgent(Player):
 
     def getMaxAction(self, state):
         max_action = 0
-        max_Q_value = 0
+        max_Q_value = -100
         # TODO if state is not terminal
         for action in range(9):
             q_value = self.getQValue(state, action)
@@ -209,12 +229,10 @@ class QAgent(Player):
     
     def getQValue(self, state, action):
         weights = self.weights
-        features = create_feature_list(state, action)
+        features, feature_values = create_feature_list(state, action)
         # print("len weights and features", len(weights), len(features))
         q_value = np.dot(features, weights)
         return q_value
-
-    
 
 def train():
     n_games = 0
@@ -225,7 +243,8 @@ def train():
     mean_scores = []
 
     while n_games < GAMES:
-        game = QwixxGame([HumanPlayer("Robot"), qAgent])
+        # HeuristicPlayer
+        game = QwixxGame([HeuristicPlayer("Robot"), qAgent])
         game.run()
         score = game.players[1].qwixx_card.calculate_score()
         # print("game number", n_games, game.players[1].name, "score", score)
@@ -235,12 +254,51 @@ def train():
         n_games += 1
     
         mean_scores.append(total_score / n_games)
+
+        # Plot scores in real-time
+        # plt.plot(all_scores, color='r', label='Scores')
+        # plt.plot(mean_scores, color='b', label='Mean Scores')
+        # plt.legend()
+        # plt.pause(0.001)  # Pause for a short time to update the plot
+
+        print(f"Game {n_games:5} QAgent score: {score:3} | Explores: {qAgent.n_explores:3} | Exploits: {qAgent.n_exploits:3} Invalid_moves: {qAgent.invalid_moves:3}")
+        print(qAgent.weights)
+        print(qAgent.action_counts)
+            
+        # print("Game ", n_games, "QAgent score: ", score, "| Explores: ", qAgent.n_explores, "| Exploits: ", qAgent.n_exploits, "Invalid_moves", qAgent.invalid_moves)
         
         qAgent.player_reset()
-    plt.plot(all_scores, color = 'r')
-    plt.plot(mean_scores, color = 'b')
+        
+    plt.plot(all_scores, color='r', label='Scores')
+    plt.plot(mean_scores, color='b', label='Mean Scores')
     plt.show()
     return qAgent.weights
+
+# def train():
+#     n_games = 0
+#     qAgent = QAgent("QAgentBigBrain")
+#     total_score = 0
+#     games = []
+#     all_scores = []
+#     mean_scores = []
+
+#     while n_games < GAMES:
+#         game = QwixxGame([HumanPlayer("Robot"), qAgent])
+#         game.run()
+#         score = game.players[1].qwixx_card.calculate_score()
+#         # print("game number", n_games, game.players[1].name, "score", score)
+#         total_score += score
+#         all_scores.append(score)
+#         games.append(n_games)
+#         n_games += 1
+    
+#         mean_scores.append(total_score / n_games)
+        
+#         qAgent.player_reset()
+#     plt.plot(all_scores, color = 'r')
+#     plt.plot(mean_scores, color = 'b')
+#     plt.show()
+#     return qAgent.weights
 
 if __name__ == "__main__":
     print(train())

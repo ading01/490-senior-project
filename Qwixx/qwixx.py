@@ -1,3 +1,4 @@
+import json
 import random
 import sys
 import time
@@ -12,7 +13,14 @@ FONT = pygame.font.Font(None, 36)
 INSTRUCTION_FONT = pygame.font.Font(None, 40)
 
 CPU_WAIT_TIME = 0
-DO_DRAW = True
+
+
+DO_DRAW = False
+# screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+# pygame.display.set_caption("Two Player Game Example")
+
+
+
 PRINT_STUFF = False
 
 # Color constants
@@ -480,8 +488,8 @@ ROW_HEIGHT = 60
 SCREEN_WIDTH, SCREEN_HEIGHT = 1600, 800
 
 # Create the main game window
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Two Player Game Example")
+# screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+# pygame.display.set_caption("Two Player Game Example")
 
 # Create cards for the players
 player1_card = pygame.Surface((600, 300))
@@ -629,7 +637,7 @@ class HumanPlayer(Player):
         making_move = True
         game.selected_dice = [None, None]
         game.draw_game()
-        print(game.get_state())
+        # print(game.get_state())
 
         while making_move:
             for event in pygame.event.get():
@@ -645,7 +653,7 @@ class HumanPlayer(Player):
                     if self.qwixx_card.cell_hit_boxes:
                         for hit_box, cell in self.qwixx_card.cell_hit_boxes:
                             if hit_box.collidepoint(x, y):
-                                my_print("row column", cell.row, cell.column)
+                                # my_print("row column", cell.row, cell.column)
                                 self.qwixx_card.selected_cell = cell  # Update selected_cell with coordinates
                                 game.draw_game()
                 elif event.type == pygame.KEYDOWN:
@@ -673,7 +681,7 @@ class HumanPlayer(Player):
 
         making_move = True
         card = self.qwixx_card
-        print(game.get_state())
+        # print(game.get_state())
         while making_move:
             for event in pygame.event.get():
                 # on mouseclick - select cell
@@ -1205,6 +1213,8 @@ class QwixxGame:
             "opponent_score": self.players[0].get_player_score()
 
         }
+        # json_state = json.dumps(state, indent=4)
+
         return state
 
     

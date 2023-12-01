@@ -114,7 +114,7 @@ def test_is_invalid_action():
         'num_crossed_out_cells': [11, 3, 5, 5],
         'selectable_cells': [
             [0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0],
-            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
             [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
         ],
@@ -124,6 +124,7 @@ def test_is_invalid_action():
     assert(is_invalid_action(state, 0) == 1)
     assert(is_invalid_action(state, 7) == 0)
     assert(is_invalid_action(state, 3) == 1)
+    assert(is_invalid_action(state, 2) == 1)
     # skip should always valid
     assert(is_invalid_action(state, 8) == 0)
 
@@ -361,17 +362,17 @@ def test_create_feature_list():
     action = 1
     features = create_feature_list(state, action)
     # total cells missed
-    assert(features[0] == 6 / 10)
+    assert(features[0][0] == 6 / 10)
     # num boxees crossed off
-    assert(features[1] == 4 / 10)
+    assert(features[0][1] == 4 / 10)
     # right_most index
-    assert(features[2] == 4 / 11)
+    assert(features[0][2] == 4 / 11)
     # strike and leading
-    assert(features[3] == 0)
+    assert(features[0][3] == 0)
     # lock and leading
-    assert(features[4] == 0)
+    assert(features[0][4] == 0)
     # is valid
-    assert(features[5] == 1)
+    assert(features[0][5] == 1)
 
     
 

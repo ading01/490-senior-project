@@ -182,8 +182,6 @@ def is_invalid_action(state, action):
     if action == 8:
         return 0
 
-    
-    
     right_most_inactive_cell_in_row = getRightMostInactiveCellInRow(state, action, action // 2) * 11
     if action % 2 == 0:
         # left
@@ -267,13 +265,15 @@ def create_feature_list(state, action):
     
     features = []
     feature_values = []
-    print(f"feature_values with action {action}")
+    # print(f"feature_values with action {action}")
     for function in functions:
         feature_value = function(state, action)
         features.append(feature_value)
         feature_values.append((function.__name__, feature_value))
+    #     print(f"{function.__name__}: {feature_value}")
+    # print("\n")
 
-    print(f"feature_values with action {action}", feature_values)
+    # print(f"feature_values with action {action}", feature_values)
 
 
 
@@ -342,7 +342,7 @@ def create_feature_list(state, action):
 
     # print(json_string)
     
-    return features
+    return features, feature_values
 
 
 
