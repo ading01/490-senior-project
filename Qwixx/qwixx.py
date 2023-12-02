@@ -889,7 +889,10 @@ class QwixxGame:
     
     
     def change_active_player(self):
-        self.active_player = 1 - self.active_player
+        if len(self.players) == 1:
+            return
+        else:
+            self.active_player = 1 - self.active_player
 
     def draw_selected_border(self, surface, selected_color, x, y, width, height):
         border_thickness = 4  # Adjust border thickness as needed
@@ -1035,6 +1038,23 @@ def my_print(text, *args):
     if PRINT_STUFF:
         print(text, args)
 
+# def test_heuristic_player():
+#     n_test_games = 1000
+#     # scores_player1 = []
+#     # scores_player2 = []
+#     scores = []
+
+#     for _ in range(n_test_games):
+#         players = [HeuristicPlayer("Allan"), HeuristicPlayer("robot2")]
+#         game = QwixxGame(players)
+#         winner, max_score = game.run()
+#         scores.append(max_score)
+
+#     # Combine the scores into a single array
+
+#     average_score = np.mean(scores)
+#     std_deviation = np.std(scores)
+
 def test_heuristic_player():
     n_test_games = 1000
     scores = []
@@ -1042,28 +1062,28 @@ def test_heuristic_player():
     for _ in range(n_test_games):
         players = [HeuristicPlayer("Allan"), HeuristicPlayer("robot2")]
         game = QwixxGame(players)
-        game.run()
-        scores.append(players[0].get_player_score())
-        scores.append(players[1].get_player_score())
+        winner, max_score = game.run()
+        scores.append(max_score)
 
+    # # Calculate the average and standard deviation of the winning scores
+    average_winning_score = np.mean(scores)
+    std_deviation_winning_score = np.std(scores)
 
-    average_score = np.mean(scores)
-    std_deviation = np.std(scores)
+    print("Average Winning Score:", average_winning_score)
+    print("Standard Deviation Winning Score:", std_deviation_winning_score)
 
-    print("Average Score:", average_score)
-    print("Standard Deviation:", std_deviation)
+    # # Plotting (if needed)
+    # plt.figure(figsize=(8, 6))
+    # plt.hist(scores, bins=30, color='blue', alpha=0.7, edgecolor='black')
+    # plt.axvline(average_winning_score, color='red', linestyle='dashed', linewidth=2, label='Average Winning Score')
+    # plt.axvline(average_winning_score + std_deviation_winning_score, color='orange', linestyle='dashed', linewidth=2, label='Avg + Std Dev')
+    # plt.axvline(average_winning_score - std_deviation_winning_score, color='orange', linestyle='dashed', linewidth=2, label='Avg - Std Dev')
+    # plt.title('Distribution of Winning Scores')
+    # plt.xlabel('Winning Score')
+    # plt.ylabel('Frequency')
+    # plt.legend()
+    # plt.show()
 
-    # Plotting
-    plt.figure(figsize=(8, 6))
-    plt.hist(scores, bins=30, color='blue', alpha=0.7, edgecolor='black')
-    plt.axvline(average_score, color='red', linestyle='dashed', linewidth=2, label='Average Score')
-    plt.axvline(average_score + std_deviation, color='orange', linestyle='dashed', linewidth=2, label='Avg + Std Dev')
-    plt.axvline(average_score - std_deviation, color='orange', linestyle='dashed', linewidth=2, label='Avg - Std Dev')
-    plt.title('Distribution of Scores')
-    plt.xlabel('Total Score')
-    plt.ylabel('Frequency')
-    plt.legend()
-    plt.show()
         
 
 

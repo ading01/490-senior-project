@@ -11,7 +11,7 @@ from qwixx import *
 # from helper import plot
 
 
-GAMES = 100000
+GAMES = 10000
 RECHECK = GAMES // 10
 INVALID_MOVE_REWARD = -10
 PENALTY_FOR_NO_ACTIONS = -15
@@ -31,11 +31,11 @@ class QAgent(Player):
         self.n_exploits = 0
         self.n_games = 0
         self.invalid_moves = 0
-        self.learning_rate = 0.001
+        self.learning_rate = 0.01
         self.epsilon = 0
         self.gamma = 0.99
         self.step = 0.00005
-        self.weights = [0 for i in range(len(functions))]
+        self.weights = [-2.5292139242159997, 0.015417271929225838, -1.7191255434400095, -1.8770352485873891]
         self.best_weights = None
     
 
@@ -184,32 +184,34 @@ class QAgent(Player):
             return
         
     def update_weights(self, reward, curr_state, action, new_state):
-        features, feature_values = create_feature_list(curr_state, action)
-        human_print(feature_values)
-        for i in range(len(self.weights)):
-            self.weights[i] = self.weights[i] + self.learning_rate * (reward + self.gamma * self.getMaxQValue(new_state) - self.getQValue(curr_state, action)) * features[i]
+        return
+        # features, feature_values = create_feature_list(curr_state, action)
+        # human_print(feature_values)
+        # for i in range(len(self.weights)):
+        #     self.weights[i] = self.weights[i] + self.learning_rate * (reward + self.gamma * self.getMaxQValue(new_state) - self.getQValue(curr_state, action)) * features[i]
         
 
 
     
     def get_action(self, state):
         # for now, always make a random move
+        final_move = self.getMaxAction(state)
 
         # epsilon starts at zero and then increases over time
 
-        if random.randint(0, 100) > self.epsilon:
-            human_print("explore")
-            self.n_explores += 1
-            final_move = randint(0, 8)
-            # print("final move", final_move)
-        else:
-            human_print("exploit")
-            self.n_exploits += 1
-            final_move = self.getMaxAction(state)
-            # exploit
+        # if random.randint(0, 100) > self.epsilon:
+        #     human_print("explore")
+        #     self.n_explores += 1
+        #     final_move = randint(0, 8)
+        #     # print("final move", final_move)
+        # else:
+        #     human_print("exploit")
+        #     self.n_exploits += 1
+        #     final_move = self.getMaxAction(state)
+        #     # exploit
         
-        self.epsilon = self.epsilon + self.step
-        human_print("making move", final_move)
+        # self.epsilon = self.epsilon + self.step
+        # human_print("making move", final_move)
         return final_move
     
     def getMaxQValue(self, state):
@@ -252,9 +254,11 @@ def train():
 
     total_exploits = 0
     total_explores = 0
+    total_invalid_actions = 0
 
     mean_exploits = []
     mean_explores = []
+    mean_invalid_actions = []
     best_average_score = -100
 
     
@@ -274,6 +278,7 @@ def train():
 
         average_score = total_score / n_games
         mean_scores.append(average_score)
+
 
         if average_score >= best_average_score:
             best_average_score = average_score
@@ -310,6 +315,9 @@ def train():
         mean_exploits.append(total_exploits / n_games)
         mean_explores.append(total_explores / n_games)
 
+        total_invalid_actions += qAgent.invalid_moves
+        mean_invalid_actions.append(total_invalid_actions / n_games)
+
 
         print(f"Game {n_games:5} QAgent score: {score:3} | Explores: {qAgent.n_explores:3} | Exploits: {qAgent.n_exploits:3} Invalid_moves: {qAgent.invalid_moves:3}")
         print(qAgent.weights)
@@ -321,8 +329,10 @@ def train():
         
     plt.plot(all_scores, color='r', label='Scores')
     plt.plot(mean_scores, color='b', label='Mean Scores')
-    plt.plot(mean_exploits, color='g', label='all_exploits')
-    plt.plot(mean_explores, color='m', label='all_explores')
+    # plt.plot(mean_exploits, color='g', label='Mean exploits')
+    # plt.plot(mean_explores, color='m', label='Mean explores')
+    # plt.plot(mean_invalid_actions, color='orange', label='Invalid Actions')
+    plt.legend()
     plt.show()
     print("best weights:", qAgent.best_weights)
     return qAgent.weights
