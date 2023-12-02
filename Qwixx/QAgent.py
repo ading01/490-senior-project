@@ -12,6 +12,10 @@ from qwixx import *
 
 
 GAMES = 100000
+RECHECK = GAMES // 10
+INVALID_MOVE_REWARD = -10
+PENALTY_FOR_NO_ACTIONS = -15
+
 
 HUMAN_PRINT = False
 
@@ -30,8 +34,9 @@ class QAgent(Player):
         self.learning_rate = 0.001
         self.epsilon = 0
         self.gamma = 0.99
-        self.step = 0.0001
+        self.step = 0.00005
         self.weights = [0 for i in range(len(functions))]
+        self.best_weights = None
     
 
     def get_state(self, game):
@@ -140,13 +145,13 @@ class QAgent(Player):
             curr_state = game.get_state()
             if curr_state["active_player"] == 1 and curr_state["game_state"].value == 3:
                 
-                reward = -5
+                reward = PENALTY_FOR_NO_ACTIONS
             else: 
                 reward = 0
             
             # TODO: FIX THIS should also update on skip
             # maybe add keyword argument
-            human_print("reward", reward)
+            # print("reward", reward)
             new_state = game.get_state() 
             self.update_weights(reward, curr_state, action, new_state)
             return
@@ -166,13 +171,13 @@ class QAgent(Player):
         except InadequateChecks:
             # print("inadequate checks")
             self.invalid_moves += 1
-            reward = -40
+            reward = INVALID_MOVE_REWARD
         except InvalidDeactivate:
             # print("invalid deactivate")
             self.invalid_moves += 1
-            reward = -40
+            reward = INVALID_MOVE_REWARD
         finally:
-            human_print("reward", reward)
+            # print("reward", reward)
             new_state = game.get_state() 
             self.update_weights(reward, curr_state, action, new_state)
             # print(self.weights)
@@ -220,7 +225,7 @@ class QAgent(Player):
         max_action = 0
         max_Q_value = -100
         # TODO if state is not terminal
-        for action in range(9):
+        for action in range(8, -1, -1):
             q_value = self.getQValue(state, action)
             if q_value > max_Q_value:
                 max_Q_value = q_value
@@ -242,7 +247,21 @@ def train():
     all_scores = []
     mean_scores = []
 
+    prev_average_score = -100
+    counter = 0
+
+    total_exploits = 0
+    total_explores = 0
+
+    mean_exploits = []
+    mean_explores = []
+    best_average_score = -100
+
+    
+
     while n_games < GAMES:
+        
+            
         # HeuristicPlayer
         game = QwixxGame([HeuristicPlayer("Robot"), qAgent])
         game.run()
@@ -252,14 +271,45 @@ def train():
         all_scores.append(score)
         games.append(n_games)
         n_games += 1
-    
-        mean_scores.append(total_score / n_games)
+
+        average_score = total_score / n_games
+        mean_scores.append(average_score)
+
+        if average_score >= best_average_score:
+            best_average_score = average_score
+            qAgent.best_weights = qAgent.weights
+
+
+
+        # if n_games == GAMES // 2:
+        #     midway_score = total_score / n_games
+        # if n_games == (GAMES // 4) * 3:
+        #     if total_score / n_games < midway_score:
+        #         break
+
+        
+        if counter >= RECHECK:
+            counter = 0
+            if total_score / n_games < prev_average_score:
+                break
+            else:
+                prev_average_score = total_score / n_games
+            
+            
+        
+        counter += 1
+        
 
         # Plot scores in real-time
         # plt.plot(all_scores, color='r', label='Scores')
         # plt.plot(mean_scores, color='b', label='Mean Scores')
         # plt.legend()
         # plt.pause(0.001)  # Pause for a short time to update the plot
+        total_exploits += qAgent.n_exploits
+        total_explores += qAgent.n_explores
+        mean_exploits.append(total_exploits / n_games)
+        mean_explores.append(total_explores / n_games)
+
 
         print(f"Game {n_games:5} QAgent score: {score:3} | Explores: {qAgent.n_explores:3} | Exploits: {qAgent.n_exploits:3} Invalid_moves: {qAgent.invalid_moves:3}")
         print(qAgent.weights)
@@ -271,7 +321,10 @@ def train():
         
     plt.plot(all_scores, color='r', label='Scores')
     plt.plot(mean_scores, color='b', label='Mean Scores')
+    plt.plot(mean_exploits, color='g', label='all_exploits')
+    plt.plot(mean_explores, color='m', label='all_explores')
     plt.show()
+    print("best weights:", qAgent.best_weights)
     return qAgent.weights
 
 # def train():

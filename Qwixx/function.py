@@ -104,7 +104,7 @@ def getTotalCellsMissed2(state, action):
 
 def is_trying_to_lock(state, action):
     if action == 8:
-        return 0
+        return 1
     
     if action % 2 == 0:
         # left
@@ -121,7 +121,7 @@ def is_trying_to_lock(state, action):
 
 def willActionResultInLock(state, action):
     if action == 8:
-        return 0
+        return 1
 
     if state["num_crossed_out_cells"][action // 2] < 5:
         return 0
@@ -144,31 +144,6 @@ def willActionResultInStrikeAndIsLeading(state, action):
     else:
         return 0
 
-
-            
-def willActionResultInFirstStrike(state, action):
-    if action == 8 and state["already_moved"] == False and state["strikes"] == 0:
-        return 1
-    else:
-        return 0
-
-def willActionResultInSecondStrike(state, action):
-    if action == 8 and state["already_moved"] == False and state["strikes"] == 1:
-        return 1
-    else:
-        return 0
-
-def willActionResultInThirdStrike(state, action):
-    if action == 8 and state["already_moved"] == False and state["strikes"] == 2:
-        return 1
-    else:
-        return 0
-
-def willActionResultInFourthStrike(state, action):
-    if action == 8 and state["already_moved"] == False and state["strikes"] == 3:
-        return 1
-    else:
-        return 0
 
 def willActionEndGame(state, action):
     if action == 8 and state["already_moved"] == False and state["strikes"] == 3:
@@ -203,6 +178,8 @@ def is_invalid_action(state, action):
     return 0
 
 def will_result_in_lock_and_is_leading(state, action):
+    if action == 8:
+        return 1
     leading = is_leading(state, action)
     will_lock = willActionResultInLock(state, action)
     return will_lock * leading
@@ -248,7 +225,7 @@ def get_num_boxes_crossed_off(state, action):
 
 def get_rightmost_crossed_off_index(state, action):
     if action == 8:
-        return 0
+        return 1
     row = state['valid_cells'][action // 2]
     return (get_right_index(row) + 1) / 11
 
@@ -256,8 +233,8 @@ functions = [
     getTotalCellsMissed2,
     get_num_boxes_crossed_off, 
     get_rightmost_crossed_off_index, 
-    willActionResultInStrikeAndIsLeading, 
-    will_result_in_lock_and_is_leading, 
+    # willActionResultInStrikeAndIsLeading, 
+    # will_result_in_lock_and_is_leading, 
     is_invalid_action
     ]
 
