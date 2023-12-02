@@ -5,6 +5,8 @@ import time
 from datetime import datetime
 from enum import Enum
 
+import matplotlib.pyplot as plt
+import numpy as np
 import pygame
 
 # Initialize Pygame
@@ -16,8 +18,12 @@ CPU_WAIT_TIME = 0
 
 
 DO_DRAW = False
+
+# Constants for screen dimensions
+SCREEN_WIDTH, SCREEN_HEIGHT = 1600, 800
 # screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 # pygame.display.set_caption("Two Player Game Example")
+
 
 
 
@@ -43,449 +49,9 @@ SPACE_BETWEEN_CELLS = CELL_HEIGHT + 10
 ROW_WIDTH = 850
 ROW_HEIGHT = 60
 
-
-
-# # Constants for screen dimensions
-# SCREEN_WIDTH, SCREEN_HEIGHT = 1600, 800
-
-# # Create the main game window
-# screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-# pygame.display.set_caption("Two Player Game Example")
-
-# # Create cards for the players
-# player1_card = pygame.Surface((600, 300))
-# player1_card.fill(GREY)
-
-# player2_card = pygame.Surface((600, 300))
-# player2_card.fill(GREY)
-
-# # Create separate game screens (surfaces) for each player
-# player1_screen = pygame.Surface((SCREEN_WIDTH // 2, SCREEN_HEIGHT))
-# player2_screen = pygame.Surface((SCREEN_WIDTH // 2, SCREEN_HEIGHT))
-
-# # Define background colors for player screens
-# PLAYER1_COLOR = (255, 0, 0)  # Red
-# PLAYER2_COLOR = (0, 0, 255)  # Blue
-
-# SCORE_MAP = {
-#     0: 0,
-#     1: 1,
-#     2: 3,
-#     3: 6,
-#     4: 10,
-#     5: 15,
-#     6: 21,
-#     7: 28,
-#     8: 36,
-#     9: 45,
-#     10: 55,
-#     11: 66,
-#     12: 78,
-# }
-
-# class InvalidDeactivate(Exception):
-#     def __init__(self, message="This cell cannot be selected. Please select again."):
-#         self.message = message
-#         super().__init__(self.message)
-
-# class InadequateChecks(Exception):
-#     def __init__(self, message="You are unable to select this cell. You need to have at least 5 checked boxes in this row"):
-#         self.message = message
-#         super().__init__(self.message)
-
-
-# class GameState(Enum):
-#     ROLL_DICE = 1
-#     OPTIONAL_SELECTION = 2
-#     COLOR_SELECTION = 3
-#     GAME_OVER = 4
-
-
-# class Die: 
-#     def __init__(self, die_id, color, sides=6):
-#         self.die_id = die_id
-#         self.sides = sides
-#         self.color = color
-#         self.value = None
-#         self.x_cord = None
-#         self.y_cord = None
-
-#     def roll(self):
-#         self.value = random.randint(1, self.sides)
-
-#     def get_value(self):
-#         return self.value
-    
-#     def get_color(self):
-#         return self.color
-    
-#     def get_die_id(self):
-#         return self.die_id
-
-#     def set_x_cord(self, x_cord):
-#         self.x_cord = x_cord
-
-#     def get_x_cord(self, ):
-#         return self.x_cord
-    
-#     def set_y_cord(self, y_cord):
-#         self.y_cord = y_cord
-
-#     def get_y_cord(self):
-#         return self.y_cord
-
-# class Player:
-#     def __init__(self, name):
-#         self.name = name
-#         self.qwixx_card = QwixxCard(name)
-#         self.player_surface = None
-#         self.is_made_move = False
-    
-#     def player_reset(s)
-    
-#     def get_card(self):
-#         return self.qwixx_card
-    
-#     def player_select_cell(self, cell):
-#         self.qwixx_card.selected_cell = cell
-
-#     def set_player_surface(self, width, height, color):
-#         self.player_surface = pygame.Surface((width, height))
-#         self.player_surface.fill(color)
-
-#     def get_player_surface(self):
-#         play_card_surface = self.qwixx_card.get_play_card_surface()
-#         self.player_surface.blit(play_card_surface, (90, 200))
-#         return self.player_surface
-    
-#     def roll_dice(self, game):
-#         pass
-
-#     def make_color_move(self, game):
-#         pass
-
-#     def make_optional_move(self, game):
-#         pass
-
-
     
 
 
-
-# class HumanPlayer(Player):
-#     def __init__(self, name):
-#         self.name = name
-#         self.qwixx_card = QwixxCard(name)
-#         self.player_screen = None
-#         self.is_made_move = False
-
-#     def roll_dice(self, game):
-
-#         making_move = True
-
-#         while making_move:
-#             for event in pygame.event.get():
-#                 if game.game_state == GameState.ROLL_DICE:
-#                     if event.type == pygame.KEYDOWN:
-#                         if event.key == pygame.K_SPACE:
-#                             game.roll_dice()
-#                             game.draw_game()
-#                             making_move = False        
-
-#     def make_color_move(self, game):
-
-#         making_move = True
-#         game.selected_dice = [None, None]
-#         game.draw_game()
-
-#         while making_move:
-#             for event in pygame.event.get():
-#                 if event.type == pygame.MOUSEBUTTONDOWN:
-#                     x, y = event.pos
-#                     if game.dice_hit_boxes:
-#                         for hit_box, die_id in game.dice_hit_boxes:
-#                             if hit_box.collidepoint(x, y):
-#                                 game.select_die(die_id)
-#                                 if None not in game.selected_dice:
-#                                     self.qwixx_card.select_valid_cells(game.dice[game.selected_dice[0]], game.dice[game.selected_dice[1]])
-#                                 game.draw_game()
-#                     if self.qwixx_card.cell_hit_boxes:
-#                         for hit_box, cell in self.qwixx_card.cell_hit_boxes:
-#                             if hit_box.collidepoint(x, y):
-#                                 my_print("row column", cell.row, cell.column)
-#                                 self.qwixx_card.selected_cell = cell  # Update selected_cell with coordinates
-#                                 game.draw_game()
-#                 elif event.type == pygame.KEYDOWN:
-#                     if event.key == pygame.K_RETURN:
-#                         if self.qwixx_card.selected_cell and self.qwixx_card.selected_cell in self.qwixx_card.valid_cells:
-#                             try:
-#                                 self.qwixx_card.cross_out_cell()
-#                                 self.qwixx_card.selected_cell = None
-#                                 self.qwixx_card.valid_cells = []
-#                                 self.is_made_move = True
-#                                 game.selected_dice = [None, None]
-#                                 making_move = False
-#                             except InvalidDeactivate as e:
-#                                 my_print(f"CustomError: {e}")
-#                                 game.warning_text = "WARNING"
-#                             except InadequateChecks as e:
-#                                 my_print(f"CustomError: {e}")
-#                                 return False
-#                             game.draw_game()
-#                     elif event.key == pygame.K_SPACE:
-#                         making_move = False
-        
-#     def make_optional_move(self, game):
-        
-
-#         making_move = True
-#         # game.selected_dice = [0, 1]
-#         card = self.qwixx_card
-#         # card.select_valid_cells(game.dice[0], game.dice[1])
-#         # game.draw_game()
-#         # print(game.get_state())
-#         while making_move:
-#             for event in pygame.event.get():
-#                 # on mouseclick - select cell
-#                 if event.type == pygame.MOUSEBUTTONDOWN:
-#                     x, y = event.pos
-#                     if self.qwixx_card.cell_hit_boxes:
-#                         for hit_box, cell in card.cell_hit_boxes:
-#                             if hit_box.collidepoint(x, y):
-#                                 my_print("row column", cell.row, cell.column)
-#                                 self.qwixx_card.selected_cell = cell  # Update selected_cell with coordinates
-#                                 game.draw_game()
-#                 if event.type == pygame.KEYDOWN:
-#                     if event.key == pygame.K_RETURN:
-#                         if self.qwixx_card.selected_cell and self.qwixx_card.selected_cell in self.qwixx_card.valid_cells:
-#                             try:
-#                                 self.qwixx_card.cross_out_cell()
-#                                 self.is_made_move = True
-#                                 making_move = False
-#                             except InvalidDeactivate as e:
-#                                 my_print(f"CustomError: {e}")
-#                                 self.qwixx_card.warning_text = "WARNING"
-#                             except InadequateChecks as e:
-#                                 my_print(f"CustomError: {e}")
-#                                 return False
-#                             game.draw_game()
-
-#                             # making_move = False
-#                 if event.type == pygame.KEYDOWN:
-#                     if event.key == pygame.K_SPACE:
-#                         making_move = False
-
-    
-# class HeuristicPlayer(Player):
-#     def __init__(self, name):
-#         self.name = name
-#         self.qwixx_card = QwixxCard(name)
-#         self.is_made_move = False
-
-#     def get_card(self):
-#         return self.qwixx_card
-    
-#     def roll_dice(self, game):
-#         game.roll_dice()
-
-#     def distance_from_prev_crossed_out_cell(self, cell):
-#         board = self.qwixx_card.board
-#         row = cell.row
-#         for box in board[row].cells:
-#             if box.is_active:
-#                 return cell.column - box.column
-        
-#         return 100
-
-#     def player_select_cell(self, cell):
-#         self.qwixx_card.selected_cell = cell
-
-            
-#     def make_color_move(self, game):
-#         white_dice = game.dice[0:2]
-#         colored_dice = game.dice[2:6]
-#         candidates = []
-
-#         for white_die in white_dice:
-#             for colored_die in colored_dice:
-#                 total = white_die.get_value() + colored_die.get_value()
-#                 color = colored_die.get_color()
-    
-#                 for row in self.qwixx_card.board:
-#                     for cell in row.cells:
-#                         if cell.is_active and cell.number == total and cell.color == color:
-#                             candidates.append(cell)
-
-#         best_move = self.get_best_move(candidates)
-
-#         if best_move is None:
-#             my_print("1: No best color move in color")
-#             time.sleep(CPU_WAIT_TIME)
-#             return
-        
-#         if self.is_made_move:
-#             if best_move[1] < 2:
-#                 try:
-#                     self.qwixx_card.selected_cell = best_move[0]
-#                     self.qwixx_card.cross_out_cell()
-#                 except InadequateChecks:
-#                     my_print("INADEQITE CHECKS")
-#                     return
-#                 except InvalidDeactivate:
-#                     my_print("invalid deactivate")
-#                     return
-#                 finally:
-#                     time.sleep(CPU_WAIT_TIME)
-#             else:
-#                 return
-#         else:
-#             try: 
-#                 self.qwixx_card.selected_cell = best_move[0]
-#                 self.qwixx_card.cross_out_cell()
-#                 self.is_made_move = True
-#             except InadequateChecks:
-#                 my_print("INADEQITE CHECKS")
-#                 return
-#             except InvalidDeactivate:
-#                 my_print("invalid deactivate")
-#                 return
-#             finally:
-#                 time.sleep(CPU_WAIT_TIME)      
-
-#     def get_best_move(self, cells):
-#         max_dist = 100  # can be any number greater than the number of cells per row
-#         candidates = []
-#         my_print("len cells:", len(cells))
-
-#         if len(cells) == 0:
-#             return None
-
-#         for valid_cell in cells:
-#             distance = self.distance_from_prev_crossed_out_cell(valid_cell)
-#             if distance == max_dist and valid_cell.is_active:
-#                 candidates.append((valid_cell, distance))
-#             elif distance < max_dist and valid_cell.is_active:
-#                 max_dist = distance
-#                 candidates = [(valid_cell, distance)]
-        
-#         my_print("max dist", max_dist)
-#         if max_dist > 4:
-#             my_print(".   1. max dist")
-#             return None
-        
-#         if len(candidates) == 0:
-#             my_print(".   2. len(candidates) == 0")
-#             return None
-
-#         max_checks = 0
-#         choices = []
-#         for candidate in candidates:
-#             row_number = candidate[0].row
-#             number_of_checks = self.qwixx_card.board[row_number].number_of_checks
-#             if number_of_checks == max_checks:
-#                 choices.append(candidate)
-#             elif number_of_checks > max_checks:
-#                 max_checks = number_of_checks
-#                 choices = [candidate]
-#         if len(choices) == 0:
-#             my_print(".     3. len(choices) == 0")
-#             return None
-#         else:
-#             choice_int = random.randint(0, len(choices) - 1)
-#             choice = choices[choice_int]
-#             my_print(".      4. chioce: ", choice)
-
-#             return choice
-            
-        
-#     def make_optional_move(self, game):
-#         #  computer
-#         # instead of determining left most, determine which is closest to a cell to ther right
-#         optional_cells = self.qwixx_card.valid_cells
-#         if len(optional_cells) == 0:
-#             time.sleep(CPU_WAIT_TIME)
-#             return 
-        
-#         best_optional_choice = self.get_best_move(optional_cells)
-
-#         if best_optional_choice is None:
-#             my_print("2. no best optional move, skipping")
-#             time.sleep(CPU_WAIT_TIME)
-#             return
-
-#         if game.players[game.active_player] is self:
-#             white_dice = game.dice[0:2]
-#             colored_dice = game.dice[2:6]
-#             colored_cells = []
-#             for white_die in white_dice:
-#                 for colored_die in colored_dice:
-#                     total = white_die.get_value() + colored_die.get_value()
-#                     color = colored_die.get_color()
-#                     for row in self.qwixx_card.board:
-#                         for cell in row.cells:
-#                             if cell.is_active and cell.number == total and cell.color == color:
-#                                 colored_cells.append(cell)
-
-#             best_colored_choice = self.get_best_move(colored_cells)
-#             if best_colored_choice is None:
-
-#                 best_colored_choice = (0, 100000)
-                
-
-
-#             if best_colored_choice[1] < best_optional_choice[1]:
-#                 # skip
-#                 my_print("skipping on turn optional")
-#                 time.sleep(CPU_WAIT_TIME)
-#                 return
-#             else: 
-#                 try:
-#                     self.qwixx_card.selected_cell = best_optional_choice[0]
-#                     self.qwixx_card.cross_out_cell()
-#                     self.is_made_move = True
-#                 except InadequateChecks:
-#                     my_print("inadequate checks")
-#                     return
-#                 finally:
-#                     time.sleep(CPU_WAIT_TIME)
-
-#         else:
-#             # if CPU does not need to move
-#             if best_optional_choice[1] < 2:
-#                 my_print("making optional move")
-#                 try:
-#                     self.qwixx_card.selected_cell = best_optional_choice[0]
-#                     self.qwixx_card.cross_out_cell()
-#                 except InadequateChecks:
-#                     return
-#                 finally:
-#                     time.sleep(CPU_WAIT_TIME)
-                    
-# class Cell:
-#     def __init__(self, number, row, column, rgb, color, x_cord, y_cord):
-#         self.number = number
-#         self.row = row
-#         self.column = column
-#         self.x = x_cord
-#         self.y = y_cord
-#         self.rgb = rgb
-#         self.color = color # "green", "red"
-#         self.is_active = True
-#         self.crossed_out = False
-
-    
-#     def draw_cell(self, screen):
-#         # cell = pygame.Surface((CELL_HEIGHT, CELL_WIDTH))
-#         pygame.draw.rect(screen, self.rgb, (self.x + 10, self.y, CELL_WIDTH, CELL_HEIGHT))
-#         # pygame.draw.rect(screen, self.rgb, (self.x, self.y, 60, 40))
-#         number = FONT.render(str(self.number), True, BLACK)
-#         if self.crossed_out:
-#             number = FONT.render("X", True, BLACK)
-
-
-
-# Constants for screen dimensions
-SCREEN_WIDTH, SCREEN_HEIGHT = 1600, 800
 
 # Create the main game window
 # screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -1061,19 +627,36 @@ class QwixxCard:
         cell = row.cells[column]
         return cell
 
+    def get_right_most_crossed_off_box_in_row(self, row):
+        for i, cell in enumerate(row.cells):
+            if cell.is_active:
+                return i
+        return 10
+        
+            
+
+
+
 
     def cross_out_cell(self):
+        # multiplier = 1
+        # reward = 0
         inital_score = self.calculate_score()
         for row in self.board:
             for cell in row.cells:
                 if self.selected_cell == cell:
                     curr_row = cell.row
+                    r_index = self.get_right_most_crossed_off_box_in_row(self.board[curr_row])
                     index = cell.column
+                    # reward = 10 - (index - r_index) / 5
+                    # print("reward, index", reward, index)
+                    # multiplier = 11 - index
                     my_print("deactiviating index:", index)
                     self.board[curr_row].deactivate_trailing_cells(index)
         my_print(f"{self.player_name}crossed out cell: ", self.selected_cell.row, self.selected_cell.column, self.selected_cell.number)
         final_score = self.calculate_score()
-        return final_score - inital_score
+        # return reward
+        return final_score - inital_score 
 
     def select_valid_cells(self, dice1, dice2):
         total = dice1.get_value() + dice2.get_value()
@@ -1452,11 +1035,44 @@ def my_print(text, *args):
     if PRINT_STUFF:
         print(text, args)
 
-if __name__ == "__main__":
-    players = [HumanPlayer("Allan"), HeuristicPlayer("robot2")]
-    game = QwixxGame(players)
-    game.run()
+def test_heuristic_player():
+    n_test_games = 1000
+    scores = []
 
+    for _ in range(n_test_games):
+        players = [HeuristicPlayer("Allan"), HeuristicPlayer("robot2")]
+        game = QwixxGame(players)
+        game.run()
+        scores.append(players[0].get_player_score())
+        scores.append(players[1].get_player_score())
+
+
+    average_score = np.mean(scores)
+    std_deviation = np.std(scores)
+
+    print("Average Score:", average_score)
+    print("Standard Deviation:", std_deviation)
+
+    # Plotting
+    plt.figure(figsize=(8, 6))
+    plt.hist(scores, bins=30, color='blue', alpha=0.7, edgecolor='black')
+    plt.axvline(average_score, color='red', linestyle='dashed', linewidth=2, label='Average Score')
+    plt.axvline(average_score + std_deviation, color='orange', linestyle='dashed', linewidth=2, label='Avg + Std Dev')
+    plt.axvline(average_score - std_deviation, color='orange', linestyle='dashed', linewidth=2, label='Avg - Std Dev')
+    plt.title('Distribution of Scores')
+    plt.xlabel('Total Score')
+    plt.ylabel('Frequency')
+    plt.legend()
+    plt.show()
+        
+
+
+if __name__ == "__main__":
+    # players = [HumanPlayer("Allan"), HeuristicPlayer("robot2")]
+    # game = QwixxGame(players)
+    # game.run()
+
+    test_heuristic_player()
 
 
 """
