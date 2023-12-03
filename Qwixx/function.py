@@ -5,6 +5,8 @@ import time
 
 import numpy as np
 
+from qwixx import SCORE_MAP
+
 actions = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 
 
@@ -229,6 +231,14 @@ def get_rightmost_crossed_off_index(state, action):
     row = state['valid_cells'][action // 2]
     return (get_right_index(row) + 1) / 11
 
+def will_action_result_in_points(state, action):
+    num_x_cells = state["num_crossed_out_cells"][action // 2]
+    multiplier = SCORE_MAP[num_x_cells]
+
+    
+
+    
+
 functions = [
     getTotalCellsMissed2,
     get_num_boxes_crossed_off, 
@@ -248,76 +258,9 @@ def create_feature_list(state, action):
         features.append(feature_value)
         feature_values.append((function.__name__, feature_value))
     #     print(f"{function.__name__}: {feature_value}")
-    # print("\n")
-
-    # print(f"feature_values with action {action}", feature_values)
-
-
-
-    # features = []
-    # colors = ["red", "yellow", "green", "blue"]
 
     
 
-    # for row_index in range(4):
-    #     right_most_inactive_cell_in_row = getRightMostInactiveCellInRow(state, action, row_index)
-    #     features.append(right_most_inactive_cell_in_row)
-
-    # num_marked_cells = [num / 11 for num in state['num_crossed_out_cells'] ]
-    # features.extend(num_marked_cells)
-
-    # features.append(getTotalCellsMissed2(state, action))
-    # features.append(willActionResultInLock(state, action))
-    # features.append(willActionResultInFirstStrike(state, action))
-    # features.append(willActionResultInSecondStrike(state, action))
-    # features.append(willActionResultInThirdStrike(state, action))
-    # features.append(willActionResultInFourthStrike(state, action))
-    # features.append(willActionEndGame(state, action))
-    # features.append(is_trying_to_lock(state, action))
-    # features.append(is_valid_action(state, action))
-    # features.append(state["active_player"])
-    # features.append(state["game_state"])
-    # features.append(state["already_moved"])
-    # features.append(state["locked_rows"])
-
-    # How many boxes would the action miss? (negative weight)
-    # Rightmost box that is crossed off (slightly negative weight) — I might eliminate this one 
-    # How many boxes are there already crossed off in the row (positive weight)
-    # Will_action_result_in_first_strike_and_is_leading
-    # …(same for 2, 3, 4th strike)
-    # will_action_result_in_lock and leading (neutral? Positive?)
-    # s_valid_action (extremely negative)
-    # is_active_player_and_has_not_moved (slightly positive) -> either a 0 or 1
-
-    # my_dict = {
-    #     "right_most_inactive_cell_in_row": features[0],
-    #     "boxes_already_crossed_off": features[1],
-    #     "Will_action_result_in_first_strike_and_is_leading": features[2],
-        
-    # }
-
-    # my_dict = {
-    #     "right_most_inactive_cell_in_row": features[0:4],
-    #     "num_marked_cells": features[4:8],
-    #     "total_cells_missed": features[8],
-    #     "will_action_result_in_lock": features[9],
-    #     "will_action_result_in_first_strike": features[10],
-    #     "will_action_result_in_second_strike": features[11],
-    #     "will_action_result_in_third_strike": features[12],
-    #     "will_action_result_in_fourth_strike": features[13],
-    #     "will_action_end_game": features[14],
-    #     "is_trying_to_lock": features[15],
-    #     "is_valid_action": features[16],
-    #     "active_player": features[17],
-    #     "game_state": features[18],
-    #     "already_moved": features[19],
-    #     "locked_rows": features[20]
-    # }
-
-
-    # json_string = json.dumps(my_dict, indent=2)
-
-    # print(json_string)
     
     return features, feature_values
 
