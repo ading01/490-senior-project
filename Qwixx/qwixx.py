@@ -26,6 +26,8 @@ SCREEN_WIDTH, SCREEN_HEIGHT = 1600, 800
 
 
 
+CONSERVATIVE_THRESHOLD = 0
+ABSORB_STRIKE_THRESHOLD = 4
 
 PRINT_STUFF = False
 
@@ -352,7 +354,7 @@ class HeuristicPlayer(Player):
             return
         
         if self.is_made_move:
-            if best_move[1] < 2:
+            if best_move[1] < (CONSERVATIVE_THRESHOLD + 1):
                 try:
                     self.qwixx_card.selected_cell = best_move[0]
                     self.qwixx_card.cross_out_cell()
@@ -397,7 +399,8 @@ class HeuristicPlayer(Player):
                 candidates = [(valid_cell, distance)]
         
         my_print("max dist", max_dist)
-        if max_dist > 4:
+        # 5 is pretty good
+        if max_dist > ABSORB_STRIKE_THRESHOLD:
             my_print(".   1. max dist")
             return None
         
@@ -479,7 +482,7 @@ class HeuristicPlayer(Player):
 
         else:
             # if CPU does not need to move
-            if best_optional_choice[1] < 2:
+            if best_optional_choice[1] < (CONSERVATIVE_THRESHOLD + 1):
                 my_print("making optional move")
                 try:
                     self.qwixx_card.selected_cell = best_optional_choice[0]
@@ -1059,7 +1062,14 @@ def test_heuristic_player():
     plt.axvline(average_score, color='red', linestyle='dashed', linewidth=2, label='Average Score')
     plt.axvline(average_score + std_deviation, color='orange', linestyle='dashed', linewidth=2, label='Avg + Std Dev')
     plt.axvline(average_score - std_deviation, color='orange', linestyle='dashed', linewidth=2, label='Avg - Std Dev')
-    plt.title('Distribution of Scores')
+
+    # Annotate the average score and standard deviations
+    plt.text(average_score, 30, f'Avg: {average_score:.2f}', color='red', ha='center')
+    plt.text(average_score + std_deviation, 25, f'Avg + Std Dev: {average_score + std_deviation:.2f}', color='orange', ha='center')
+    plt.text(average_score - std_deviation, 25, f'Avg - Std Dev: {average_score - std_deviation:.2f}', color='orange', ha='center')
+
+    plt.title(f'Distribution of Heuristic CPU Scores\nConservative threshold: {CONSERVATIVE_THRESHOLD}; Absorbing strike threshold: {ABSORB_STRIKE_THRESHOLD}')
+
     plt.xlabel('Total Score')
     plt.ylabel('Frequency')
     plt.legend()
