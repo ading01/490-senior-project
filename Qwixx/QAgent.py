@@ -10,8 +10,9 @@ from qwixx import *
 
 # from helper import plot
 
+PRINT_GAME_INFO = True
 
-GAMES = 100000
+GAMES = 150000
 RECHECK = GAMES // 10
 INVALID_MOVE_REWARD = -10
 PENALTY_FOR_NO_ACTIONS = -15
@@ -34,7 +35,7 @@ class QAgent(Player):
         self.learning_rate = 0.001
         self.epsilon = 0
         self.gamma = 0.99
-        self.step = 0.00005
+        self.step = 0.00002
         self.weights = [0 for i in range(len(functions))]
         self.best_weights = None
     
@@ -147,7 +148,7 @@ class QAgent(Player):
                 
                 reward = PENALTY_FOR_NO_ACTIONS
             else: 
-                reward = 0
+                reward = -10
             
             # TODO: FIX THIS should also update on skip
             # maybe add keyword argument
@@ -239,6 +240,11 @@ class QAgent(Player):
         q_value = np.dot(features, weights)
         return q_value
 
+    def get_best_weights(self):
+        return ["{:.2f}".format(value) for value in self.best_weights]
+
+
+
 def train():
     n_games = 0
     qAgent = QAgent("QAgentBigBrain")
@@ -256,6 +262,10 @@ def train():
     mean_exploits = []
     mean_explores = []
     best_average_score = -100
+
+    total_invalid_moves = 0
+    invalid_moves = []
+
 
     
 
@@ -307,22 +317,35 @@ def train():
         # plt.pause(0.001)  # Pause for a short time to update the plot
         total_exploits += qAgent.n_exploits
         total_explores += qAgent.n_explores
+        total_invalid_moves += qAgent.invalid_moves
         mean_exploits.append(total_exploits / n_games)
         mean_explores.append(total_explores / n_games)
 
+        
+        invalid_moves.append(total_invalid_moves / n_games)
 
-        print(f"Game {n_games:5} QAgent score: {score:3} | Explores: {qAgent.n_explores:3} | Exploits: {qAgent.n_exploits:3} Invalid_moves: {qAgent.invalid_moves:3}")
-        print(qAgent.weights)
-        print(qAgent.action_counts)
+
+        if PRINT_GAME_INFO:
+            print(f"Game {n_games:5} QAgent score: {score:3} | Explores: {qAgent.n_explores:3} | Exploits: {qAgent.n_exploits:3} Invalid_moves: {qAgent.invalid_moves:3}")
+            print(qAgent.weights)
+            print(qAgent.action_counts)
             
         # print("Game ", n_games, "QAgent score: ", score, "| Explores: ", qAgent.n_explores, "| Exploits: ", qAgent.n_exploits, "Invalid_moves", qAgent.invalid_moves)
         
         qAgent.player_reset()
         
+    plt.title(f'Average Score of Agent over {n_games} episodes\n LR:{qAgent.learning_rate}; Step: {qAgent.step}\n Best weights: {qAgent.get_best_weights()}')
+    plt.xlabel('Episodes')
+    plt.ylabel('Frequency')
     plt.plot(all_scores, color='r', label='Scores')
     plt.plot(mean_scores, color='b', label='Mean Scores')
-    plt.plot(mean_exploits, color='g', label='all_exploits')
-    plt.plot(mean_explores, color='m', label='all_explores')
+    plt.plot(mean_exploits, color='g', label='Exploits')
+    plt.plot(mean_explores, color='m', label='Explores')
+    plt.plot(invalid_moves, color='orange', label='Invalid moves')
+    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+
+    plt.tight_layout()
+
     plt.show()
     print("best weights:", qAgent.best_weights)
     return qAgent.weights
