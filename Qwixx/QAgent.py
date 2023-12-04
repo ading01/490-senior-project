@@ -14,7 +14,7 @@ PRINT_GAME_INFO = True
 
 GAMES = 150000
 RECHECK = GAMES // 10
-INVALID_MOVE_REWARD = -10
+INVALID_MOVE_REWARD = -13
 PENALTY_FOR_NO_ACTIONS = -15
 
 
@@ -35,7 +35,7 @@ class QAgent(Player):
         self.learning_rate = 0.001
         self.epsilon = 0
         self.gamma = 0.99
-        self.step = 0.00002
+        self.step = 0.00003
         self.weights = [0 for i in range(len(functions))]
         self.best_weights = None
     

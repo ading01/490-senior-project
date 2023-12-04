@@ -636,11 +636,6 @@ class QwixxCard:
                 return i
         return 10
         
-            
-
-
-
-
     def cross_out_cell(self):
         # multiplier = 1
         # reward = 0
@@ -657,7 +652,15 @@ class QwixxCard:
                     my_print("deactiviating index:", index)
                     self.board[curr_row].deactivate_trailing_cells(index)
         my_print(f"{self.player_name}crossed out cell: ", self.selected_cell.row, self.selected_cell.column, self.selected_cell.number)
+        
+        if self.is_game_over():
+            return 30
+        
         final_score = self.calculate_score()
+
+
+        # check if game ended and if won or lost
+
         # return reward
         return final_score - inital_score 
 

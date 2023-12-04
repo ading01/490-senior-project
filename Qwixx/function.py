@@ -242,7 +242,7 @@ def will_action_result_in_points(state, action):
 functions = [
     getTotalCellsMissed2,
     get_num_boxes_crossed_off, 
-    get_rightmost_crossed_off_index, 
+    # get_rightmost_crossed_off_index, 
     # willActionResultInStrikeAndIsLeading, 
     # will_result_in_lock_and_is_leading, 
     is_invalid_action
