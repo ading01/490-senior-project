@@ -293,12 +293,12 @@ def train():
         #         break
 
         
-        if counter >= RECHECK:
-            counter = 0
-            if total_score / n_games < prev_average_score:
-                break
-            else:
-                prev_average_score = total_score / n_games
+        # if counter >= RECHECK:
+        #     counter = 0
+        #     if total_score / n_games < prev_average_score:
+        #         break
+        #     else:
+        #         prev_average_score = total_score / n_games
             
             
         
@@ -326,15 +326,21 @@ def train():
         # print("Game ", n_games, "QAgent score: ", score, "| Explores: ", qAgent.n_explores, "| Exploits: ", qAgent.n_exploits, "Invalid_moves", qAgent.invalid_moves)
         
         qAgent.player_reset()
-        
+    
+    plt.title(f"Scores and average score using 4 feature approach\nWeights used: {[f'{round(number, 2):.2f}' for number in qAgent.weights]}")
     plt.plot(all_scores, color='r', label='Scores')
     plt.plot(mean_scores, color='b', label='Mean Scores')
+    plt.xlabel("Games played")
+    plt.ylabel("Score")
     # plt.plot(mean_exploits, color='g', label='Mean exploits')
     # plt.plot(mean_explores, color='m', label='Mean explores')
     # plt.plot(mean_invalid_actions, color='orange', label='Invalid Actions')
     plt.legend()
+    plt.text(n_games, average_score, f'Average Score: {average_score:.2f}', ha='right', va='bottom')
+
     plt.show()
     print("best weights:", qAgent.best_weights)
+    print("average score", total_score / n_games)
     return qAgent.weights
 
 # def train():
