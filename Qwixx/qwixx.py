@@ -832,7 +832,8 @@ class QwixxGame:
             "strikes": self.players[self.moving_player].qwixx_card.strikes, 
             "locked_rows": self.get_locked_rows(),
             "player_score": self.players[1].get_player_score(),
-            "opponent_score": self.players[0].get_player_score()
+            "opponent_score": self.players[0].get_player_score(),
+            "is_game_over": self.is_game_over(),
 
         }
         # json_state = json.dumps(state, indent=4)
@@ -1227,9 +1228,9 @@ if __name__ == "__main__":
     # game = QwixxGame(players)
     # game.run()
     # test_parameters()
-    # test_heuristic_player()
+    test_heuristic_player()
     # test_uncertainty()
-    print(test_multiple_uncertainty())
+    # print(test_multiple_uncertainty())
 
 """
 

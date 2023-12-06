@@ -4,7 +4,6 @@ import sys
 import time
 
 import numpy as np
-
 from qwixx import SCORE_MAP
 
 actions = [0, 1, 2, 3, 4, 5, 6, 7, 8]
@@ -157,7 +156,7 @@ def willActionEndGame(state, action):
 
 def is_invalid_action(state, action):
     if action == 8:
-        return 0
+        return -1
 
     right_most_inactive_cell_in_row = getRightMostInactiveCellInRow(state, action, action // 2) * 11
     if action % 2 == 0:
@@ -177,7 +176,7 @@ def is_invalid_action(state, action):
         if right_ind <= right_most_inactive_cell_in_row:
             return 1
     
-    return 0
+    return -1
 
 def will_result_in_lock_and_is_leading(state, action):
     if action == 8:
@@ -235,20 +234,23 @@ def will_action_result_in_points(state, action):
     num_x_cells = state["num_crossed_out_cells"][action // 2]
     multiplier = SCORE_MAP[num_x_cells]
 
-    
 
-    
+def cheese(state, action):
+    is_invalid = is_invalid_action(state, action)
+    return (1 - getTotalCellsMissed2(state, action)) * is_invalid
 
 functions = [
+    # cheese,
     getTotalCellsMissed2,
     get_num_boxes_crossed_off, 
     # get_rightmost_crossed_off_index, 
-    # willActionResultInStrikeAndIsLeading, 
-    # will_result_in_lock_and_is_leading, 
-    is_invalid_action
+    willActionResultInStrikeAndIsLeading, 
+    # # will_result_in_lock_and_is_leading, 
+    # is_invalid_action
     ]
 
 def create_feature_list(state, action):
+    # print("state", state)
     
     features = []
     feature_values = []

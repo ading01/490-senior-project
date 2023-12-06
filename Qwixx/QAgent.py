@@ -11,10 +11,10 @@ from qwixx import *
 
 PRINT_GAME_INFO = True
 
-GAMES = 100000
-RECHECK = GAMES // 10
+GAMES = 10000
+RECHECK = GAMES
 INVALID_MOVE_REWARD = -13
-PENALTY_FOR_NO_ACTIONS = -15
+PENALTY_FOR_NO_ACTIONS = -5
 
 HUMAN_TEST = False
 
@@ -36,14 +36,15 @@ class QAgent(Player):
         self.invalid_moves = 0
         self.InadequateChecks = 0 
         self.InvalidDeactivates = 0
+        self.minimum_epsilon = 10
 
 
         self.learning_rate = 0.001
-        self.epsilon = 0
+        self.epsilon = 100
         self.gamma = 0.99
-        self.step = 0.00005
+        self.step = 0.0001
         if EXPLOIT_ONLY:
-            self.weights = [-10.838601702360117, -4.447902378735281]
+            self.weights =  [-1.4083951761175781, -1.123894187907306, 0.2947252261814512] # [-10.838601702360117, -4.447902378735281] # [-4.213611058893543, -6.599510175809286]
         else:
             self.weights = [0 for i in range(len(functions))]
         self.best_weights = None
@@ -70,6 +71,7 @@ class QAgent(Player):
     def make_color_move(self, game):
         # adapter
         self.highlight_all_selectable_cells(game)
+        time.sleep(CPU_WAIT_TIME)
         curr_state = game.get_state()
         action = self.get_action(curr_state)
         self.make_move(game, curr_state, action)
@@ -77,6 +79,7 @@ class QAgent(Player):
     def make_optional_move(self, game):
         # adapter
         curr_state = game.get_state()
+        time.sleep(CPU_WAIT_TIME)
         action = self.get_action(curr_state)
         self.make_move(game, curr_state, action)
 
@@ -172,7 +175,7 @@ class QAgent(Player):
                 
                 reward = PENALTY_FOR_NO_ACTIONS
             else: 
-                reward = -10
+                reward = 0
             
             # TODO: FIX THIS should also update on skip
             # maybe add keyword argument
@@ -218,8 +221,13 @@ class QAgent(Player):
             return
         features, feature_values = create_feature_list(curr_state, action)
         human_print(feature_values)
+        if new_state["is_game_over"]:
+            maxQvalue = 0
+        else:
+            maxQvalue = self.getMaxQValue(new_state)
         for i in range(len(self.weights)):
-            self.weights[i] = self.weights[i] + self.learning_rate * (reward + self.gamma * self.getMaxQValue(new_state) - self.getQValue(curr_state, action)) * features[i]
+            self.weights[i] = self.weights[i] + self.learning_rate * (reward + self.gamma * maxQvalue - self.getQValue(curr_state, action)) * features[i]
+        
         
 
     def set_list_of_valid_actions(self, state):
@@ -233,13 +241,20 @@ class QAgent(Player):
             active_row = state["valid_cells"][action]
 
             if l_ind == r_ind and l_ind < 11 and l_ind > -1 and active_row[l_ind] == 0:
-                valid_actions.append(action * 2)
+                if l_ind == 10:
+                    if state["num_crossed_out_cells"][action] >= 5:
+                        valid_actions.append(action * 2)
+                else:
+                    valid_actions.append(action * 2)
             else:
                 if l_ind < 11 and active_row[l_ind] == 0:
                     valid_actions.append(action * 2)
-                
                 if r_ind > -1 and active_row[r_ind] == 0:
-                    valid_actions.append(action * 2 + 1)
+                    if r_ind == 10:
+                        if state["num_crossed_out_cells"][action] >= 5:
+                            valid_actions.append(action * 2 + 1)
+                    else:
+                        valid_actions.append(action * 2 + 1)
         
         valid_actions.append(8)
         self.valid_actions = valid_actions
@@ -258,7 +273,7 @@ class QAgent(Player):
 
         # epsilon starts at zero and then increases over time
 
-        if random.randint(0, 100) > self.epsilon:
+        if random.randint(0, 100) < max(self.epsilon, self.minimum_epsilon):
             human_print("explore")
             self.n_explores += 1
             randnum = randint(0, len(self.valid_actions) - 1)
@@ -270,7 +285,7 @@ class QAgent(Player):
             final_move = self.getMaxAction(state)
             # exploit
         
-        self.epsilon = self.epsilon + self.step
+        self.epsilon = self.epsilon - self.step
         human_print("making move", final_move)
         return final_move
     
@@ -312,7 +327,6 @@ def train():
     n_games = 0
     qAgent = QAgent("QAgentBigBrain")
     total_score = 0
-    games = []
     all_scores = []
     mean_scores = []
 
@@ -342,10 +356,11 @@ def train():
 
         game.run()
         score = game.players[1].qwixx_card.calculate_score()
-        # print("game number", n_games, game.players[1].name, "score", score)
+        qAgent.n_games += 1
+        # qAgent.learning_rate = qAgent.learning_rate / (qAgent.n_games)
+        # print("learning rate", qAgent.learning_rate)
         total_score += score
         all_scores.append(score)
-        games.append(n_games)
         n_games += 1
 
         average_score = total_score / n_games
