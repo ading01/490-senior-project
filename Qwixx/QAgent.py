@@ -4,7 +4,6 @@ from random import randint
 
 import matplotlib.pyplot as plt
 import numpy as np
-
 from function import *
 from qwixx import *
 
@@ -12,7 +11,7 @@ from qwixx import *
 
 PRINT_GAME_INFO = True
 
-GAMES = 10000
+GAMES = 100000
 RECHECK = GAMES // 10
 INVALID_MOVE_REWARD = -13
 PENALTY_FOR_NO_ACTIONS = -15
@@ -44,7 +43,7 @@ class QAgent(Player):
         self.gamma = 0.99
         self.step = 0.00005
         if EXPLOIT_ONLY:
-            self.weights = [-14.183727143778377, -4.578589520344524, -3.0740653481647584]
+            self.weights = [-10.838601702360117, -4.447902378735281]
         else:
             self.weights = [0 for i in range(len(functions))]
         self.best_weights = None
