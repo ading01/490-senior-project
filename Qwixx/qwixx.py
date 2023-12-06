@@ -1,4 +1,5 @@
 import json
+import math
 import random
 import sys
 import time
@@ -9,6 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pygame
 
+HUMAN_TEST = False
+
 # Initialize Pygame
 pygame.init()
 FONT = pygame.font.Font(None, 36)
@@ -17,17 +20,25 @@ INSTRUCTION_FONT = pygame.font.Font(None, 40)
 CPU_WAIT_TIME = 0
 
 
+
 DO_DRAW = False
 
 # Constants for screen dimensions
 SCREEN_WIDTH, SCREEN_HEIGHT = 1600, 800
-# screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-# pygame.display.set_caption("Two Player Game Example")
+
+if HUMAN_TEST:
+    DO_DRAW = True
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Two Player Game Example")
+
+if DO_DRAW:
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Two Player Game Example")
 
 
 
 CONSERVATIVE_THRESHOLD = 0
-ABSORB_STRIKE_THRESHOLD = 4
+ABSORB_STRIKE_THRESHOLD = 10
 
 PRINT_STUFF = False
 
@@ -149,6 +160,10 @@ class Player:
         self.qwixx_card = QwixxCard(name)
         self.player_surface = None
         self.is_made_move = False
+        self.scores = [0]
+    
+    def record_score(self):
+        self.scores.append(self.qwixx_card.score)
     
     def get_player_score(self):
         return self.qwixx_card.score
@@ -311,6 +326,7 @@ class HeuristicPlayer(Player):
         self.name = name
         self.qwixx_card = QwixxCard(name)
         self.is_made_move = False
+        self.scores = []
 
     def get_card(self):
         return self.qwixx_card
@@ -358,6 +374,7 @@ class HeuristicPlayer(Player):
                 try:
                     self.qwixx_card.selected_cell = best_move[0]
                     self.qwixx_card.cross_out_cell()
+                    game.record_scores()
                 except InadequateChecks:
                     my_print("INADEQITE CHECKS")
                     return
@@ -372,6 +389,7 @@ class HeuristicPlayer(Player):
             try: 
                 self.qwixx_card.selected_cell = best_move[0]
                 self.qwixx_card.cross_out_cell()
+                game.record_scores()
                 self.is_made_move = True
             except InadequateChecks:
                 my_print("INADEQITE CHECKS")
@@ -409,15 +427,22 @@ class HeuristicPlayer(Player):
             return None
 
         max_checks = 0
+        farthest_left = 20
         choices = []
         for candidate in candidates:
-            row_number = candidate[0].row
-            number_of_checks = self.qwixx_card.board[row_number].number_of_checks
-            if number_of_checks == max_checks:
-                choices.append(candidate)
-            elif number_of_checks > max_checks:
-                max_checks = number_of_checks
+            box = candidate[0]
+            if box.column < farthest_left:
+                farthest_left = box.column
                 choices = [candidate]
+            elif box.column == farthest_left:
+                choices.append(candidate)
+            # row_number = candidate[0].row
+            # number_of_checks = self.qwixx_card.board[row_number].number_of_checks
+            # if number_of_checks == max_checks:
+            #     choices.append(candidate)
+            # elif number_of_checks > max_checks:
+            #     max_checks = number_of_checks
+            #     choices = [candidate]
         if len(choices) == 0:
             my_print(".     3. len(choices) == 0")
             return None
@@ -473,6 +498,7 @@ class HeuristicPlayer(Player):
                 try:
                     self.qwixx_card.selected_cell = best_optional_choice[0]
                     self.qwixx_card.cross_out_cell()
+                    game.record_scores()
                     self.is_made_move = True
                 except InadequateChecks:
                     my_print("inadequate checks")
@@ -487,6 +513,7 @@ class HeuristicPlayer(Player):
                 try:
                     self.qwixx_card.selected_cell = best_optional_choice[0]
                     self.qwixx_card.cross_out_cell()
+                    game.record_scores()
                 except InadequateChecks:
                     return
                 finally:
@@ -503,6 +530,9 @@ class Cell:
         self.color = color # "green", "red"
         self.is_active = True
         self.crossed_out = False
+    
+    def __str__(self):
+        return f"Cell {self.number} - Color: {self.color}, Coordinates: ({self.row}, {self.column}), is active? {self.is_active}"
 
     
     def draw_cell(self, screen):
@@ -638,7 +668,7 @@ class QwixxCard:
         
     def cross_out_cell(self):
         # multiplier = 1
-        # reward = 0
+        reward = 0
         inital_score = self.calculate_score()
         for row in self.board:
             for cell in row.cells:
@@ -646,23 +676,26 @@ class QwixxCard:
                     curr_row = cell.row
                     r_index = self.get_right_most_crossed_off_box_in_row(self.board[curr_row])
                     index = cell.column
-                    # reward = 10 - (index - r_index) / 5
+                    
+                    reward = (10 - index - r_index) / 10
+                    
                     # print("reward, index", reward, index)
                     # multiplier = 11 - index
                     my_print("deactiviating index:", index)
                     self.board[curr_row].deactivate_trailing_cells(index)
-        my_print(f"{self.player_name}crossed out cell: ", self.selected_cell.row, self.selected_cell.column, self.selected_cell.number)
+        if HUMAN_TEST:
+            print(f"{self.player_name}crossed out cell: ", self.selected_cell.row, self.selected_cell.column, self.selected_cell.number)
         
-        if self.is_game_over():
-            return 30
+        # if self.is_game_over():
+        #     return 30
         
         final_score = self.calculate_score()
 
 
         # check if game ended and if won or lost
-
-        # return reward
-        return final_score - inital_score 
+        # print("reward", reward)
+        return reward
+        # return final_score - inital_score 
 
     def select_valid_cells(self, dice1, dice2):
         total = dice1.get_value() + dice2.get_value()
@@ -694,12 +727,12 @@ class QwixxCard:
             return True
         
         # if two of the rows are locked
-        locked_rows = 0
-        for row in self.board:
-            if row.is_locked:
-                locked_rows += 1
-        if locked_rows >= 2:
-            return True
+        # locked_rows = 0
+        # for row in self.board:
+        #     if row.is_locked:
+        #         locked_rows += 1
+        # if locked_rows >= 2:
+        #     return True
         return False
 
     def draw_selected_border(self, surface, selected_color):
@@ -934,6 +967,10 @@ class QwixxGame:
             pygame.display.flip()
         else:
             return
+    
+    def record_scores(self):
+        for player in self.players:
+            player.record_score()
 
     def run(self):
         start_time = datetime.now()
@@ -1041,6 +1078,16 @@ def my_print(text, *args):
     if PRINT_STUFF:
         print(text, args)
 
+def test_parameters():
+    for i in range(11):
+        CONSERVATIVE_THRESHOLD = i
+        test_heuristic_player()
+    CONSERVATIVE_THRESHOLD = 4 
+    for i in range(11):
+        ABSORB_STRIKE_THRESHOLD = i
+        test_heuristic_player()   
+
+
 def test_heuristic_player():
     n_test_games = 1000
     scores = []
@@ -1055,38 +1102,134 @@ def test_heuristic_player():
 
     average_score = np.mean(scores)
     std_deviation = np.std(scores)
-
+    print(CONSERVATIVE_THRESHOLD)
     print("Average Score:", average_score)
     print("Standard Deviation:", std_deviation)
 
     # Plotting
-    plt.figure(figsize=(8, 6))
-    plt.hist(scores, bins=30, color='blue', alpha=0.7, edgecolor='black')
-    plt.axvline(average_score, color='red', linestyle='dashed', linewidth=2, label='Average Score')
-    plt.axvline(average_score + std_deviation, color='orange', linestyle='dashed', linewidth=2, label='Avg + Std Dev')
-    plt.axvline(average_score - std_deviation, color='orange', linestyle='dashed', linewidth=2, label='Avg - Std Dev')
+    # plt.figure(figsize=(8, 6))
+    # plt.hist(scores, bins=30, color='blue', alpha=0.7, edgecolor='black')
+    # plt.axvline(average_score, color='red', linestyle='dashed', linewidth=2, label='Average Score')
+    # plt.axvline(average_score + std_deviation, color='orange', linestyle='dashed', linewidth=2, label='Avg + Std Dev')
+    # plt.axvline(average_score - std_deviation, color='orange', linestyle='dashed', linewidth=2, label='Avg - Std Dev')
 
-    # Annotate the average score and standard deviations
-    plt.text(average_score, 30, f'Avg: {average_score:.2f}', color='red', ha='center')
-    plt.text(average_score + std_deviation, 25, f'Avg + Std Dev: {average_score + std_deviation:.2f}', color='orange', ha='center')
-    plt.text(average_score - std_deviation, 25, f'Avg - Std Dev: {average_score - std_deviation:.2f}', color='orange', ha='center')
+    # # Annotate the average score and standard deviations
+    # plt.text(average_score, 30, f'Avg: {average_score:.2f}', color='red', ha='center')
+    # plt.text(average_score + std_deviation, 25, f'Avg + Std Dev: {average_score + std_deviation:.2f}', color='orange', ha='center')
+    # plt.text(average_score - std_deviation, 25, f'Avg - Std Dev: {average_score - std_deviation:.2f}', color='orange', ha='center')
 
-    plt.title(f'Distribution of Heuristic CPU Scores\nConservative threshold: {CONSERVATIVE_THRESHOLD}; Absorbing strike threshold: {ABSORB_STRIKE_THRESHOLD}')
+    # plt.title(f'Distribution of Heuristic CPU Scores\nConservative threshold: {CONSERVATIVE_THRESHOLD}; Absorbing strike threshold: {ABSORB_STRIKE_THRESHOLD}')
 
-    plt.xlabel('Total Score')
-    plt.ylabel('Frequency')
-    plt.legend()
-    plt.show()
+    # plt.xlabel('Total Score')
+    # plt.ylabel('Frequency')
+    # plt.legend()
+    # plt.show()
+
+
+
         
+def calculate_uncertainty(player1_scores, player2_scores, M=100):
+    # Ensure the lists are of the same length
+    if len(player1_scores) != len(player2_scores):
+        raise ValueError("Both player1_scores and player2_scores must have the same length.")
+
+    # Calculate the lead history (score difference)
+    lead_history = np.array(player1_scores) - np.array(player2_scores)
+
+    # Define the interpolation line points
+    interpolation_line = [(0, 0), (M, 1)]
+
+    # Calculate the slope and intercept of the interpolation line
+    slope = (interpolation_line[1][1] - interpolation_line[0][1]) / (interpolation_line[1][0] - interpolation_line[0][0])
+    intercept = interpolation_line[0][1] - slope * interpolation_line[0][0]
+
+    # Calculate the estimated lead values at each time point
+    estimated_lead_values = np.linspace(0, M, len(player1_scores)) * slope + intercept
+
+    # Calculate the distance between the lead history and the interpolation line
+    distances = np.abs(lead_history - estimated_lead_values)
+
+    # Calculate the average distance
+    average_distance = np.mean(distances)
+
+    return average_distance
+
+def find_area(score_diff, slope):
+    total = 0
+    for i, score_d in enumerate(score_diff):
+        y = i * slope
+        total += y - score_d
+    return total
+
+def test_uncertainty():
+    players = [HeuristicPlayer("Allan"), HeuristicPlayer("robot2")]
+    game = QwixxGame(players)
+    game.run()
+
+    player1_scores = players[0].scores
+    player2_scores = players[1].scores
+
+    print("len", len(player1_scores))
+    print("p1, p2 scores", player1_scores, player2_scores)
+
+    uncertainty = calculate_uncertainty(player1_scores, player2_scores)
+
+    time_points = range(1, len(player1_scores) + 1)
+
+    # Plotting the scores
+    plt.plot(time_points, player1_scores, label='Player 1', marker='o')
+    plt.plot(time_points, player2_scores, label='Player 2', marker='o')
+
+    score_difference = np.array(player1_scores) - np.array(player2_scores)
+    plt.plot(time_points, score_difference, label='Score Difference (P1 - P2)', color='red', linestyle='--')    
+
+    # Determine the slope of the grey line (assuming it starts at the origin)
+    final_score_highest_player = max(player1_scores[-1], player2_scores[-1])
+    slope = final_score_highest_player / len(player1_scores)
+
+    # Plot the grey line from (0, 0) to the last point of the player with the higher score at the end
+    plt.plot([0, len(player1_scores)], [0, final_score_highest_player], label='Line to Final Score (Highest Player)', linestyle='-', color='grey')
+
+    # Plot the grey dotted lines from the red line to the grey line
+    uncertainty_score = find_area(score_difference, slope)
+    print("uncertainty_score", uncertainty_score)
+    # for i, time_point in enumerate(time_points):
+    #     y_on_grey_line = slope * time_point
+    #     upper_limit = min(y_on_grey_line, score_difference[i])
+    #     plt.plot([time_point, time_point], [score_difference[i], upper_limit], linestyle=':', color='grey')
+
+    # Adding labels and a legend
+    # plt.xlabel('Time')
+    # plt.ylabel('Scores')
+    # plt.title('Player Scores Over Time with Uncertainty and Line to Final Score')
+    # plt.legend()
+
+    # # Display the plot
+    # plt.show()
+    return uncertainty_score
+
+
+def test_multiple_uncertainty():
+    scores = []
+    for i in range(10000):
+        score = test_uncertainty()
+        scores.append(score)
+
+    average_score = sum(scores) / 10000
+    variance = sum((x - average_score) ** 2 for x in scores) / 10000
+    standard_deviation = math.sqrt(variance)
+
+    return average_score, standard_deviation
 
 
 if __name__ == "__main__":
     # players = [HumanPlayer("Allan"), HeuristicPlayer("robot2")]
     # game = QwixxGame(players)
     # game.run()
-
-    test_heuristic_player()
-
+    # test_parameters()
+    # test_heuristic_player()
+    # test_uncertainty()
+    print(test_multiple_uncertainty())
 
 """
 
