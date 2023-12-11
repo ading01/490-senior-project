@@ -727,12 +727,12 @@ class QwixxCard:
             return True
         
         # if two of the rows are locked
-        # locked_rows = 0
-        # for row in self.board:
-        #     if row.is_locked:
-        #         locked_rows += 1
-        # if locked_rows >= 2:
-        #     return True
+        locked_rows = 0
+        for row in self.board:
+            if row.is_locked:
+                locked_rows += 1
+        if locked_rows >= 2:
+            return True
         return False
 
     def draw_selected_border(self, surface, selected_color):
@@ -822,6 +822,7 @@ class QwixxGame:
 
     def get_state(self):
         state = {
+            "active_player_obj": self.players[self.active_player],
             "active_player": self.active_player,
             "game_state": self.game_state, # this should be an ENUM of either 1 or 2, but
             # will probably be adjusted to be one-indexed (i.e. 0 or 1)
@@ -834,7 +835,6 @@ class QwixxGame:
             "player_score": self.players[1].get_player_score(),
             "opponent_score": self.players[0].get_player_score(),
             "is_game_over": self.is_game_over(),
-
         }
         # json_state = json.dumps(state, indent=4)
 

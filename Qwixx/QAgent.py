@@ -8,19 +8,25 @@ from function import *
 from qwixx import *
 
 # from helper import plot
-
+EXPLOIT_ONLY = True
+HUMAN_TEST = False
+HUMAN_PRINT = False
 PRINT_GAME_INFO = True
 
-GAMES = 10000
-RECHECK = GAMES
+
+if EXPLOIT_ONLY:
+    GAMES = 10000
+    RECHECK = GAMES 
+else:
+    GAMES = 150000
+    RECHECK = GAMES // 10
+
+
+# GAMES = 10000
+
 INVALID_MOVE_REWARD = -13
 PENALTY_FOR_NO_ACTIONS = -5
 
-HUMAN_TEST = False
-
-EXPLOIT_ONLY = True
-
-HUMAN_PRINT = False
 
 def human_print(string, *args):
     if HUMAN_PRINT:
@@ -44,7 +50,7 @@ class QAgent(Player):
         self.gamma = 0.99
         self.step = 0.0001
         if EXPLOIT_ONLY:
-            self.weights =  [-1.4083951761175781, -1.123894187907306, 0.2947252261814512] # [-10.838601702360117, -4.447902378735281] # [-4.213611058893543, -6.599510175809286]
+            self.weights =  [-1.4461000751133606, -0.07292251815457883, -0.5058877438501571] # [-1.2640389959626739, -0.9451892917177317, 0.18346097243470913] # [-1.279959348286468, -0.9389276994763408, 0.24330722784946257] #[-1.248825282210372, -0.9580416863700797, 0.21658277751757418] # [-1.4083951761175781, -1.123894187907306, 0.2947252261814512] # [-10.838601702360117, -4.447902378735281] # [-4.213611058893543, -6.599510175809286]
         else:
             self.weights = [0 for i in range(len(functions))]
         self.best_weights = None
@@ -260,11 +266,31 @@ class QAgent(Player):
         self.valid_actions = valid_actions
 
 
+    def do_skip(self, state):
+        threshold = 0.5
+
+        game_state = state["game_state"].value
+        if state["already_moved"] == True or state["active_player"] == 0:
+            threshold = 0.1        
+
+        min_skip = 12
+        for action in range(8):
+            min_skip = min(getTotalCellsMissed2(state, action), min_skip)
+        # print("min skip", min_skip)
+        if (min_skip) <= threshold:
+            return False
+        else:
+            return True
+
 
 
     
     def get_action(self, state):
         # for now, always make a random move
+        if self.do_skip(state):
+            # print("skipping")
+            return 8
+
         self.set_list_of_valid_actions(state)
         if EXPLOIT_ONLY:
             return self.getMaxAction(state)
@@ -325,7 +351,7 @@ class QAgent(Player):
 
 def train():
     n_games = 0
-    qAgent = QAgent("QAgentBigBrain")
+    qAgent = QAgent("QAgent")
     total_score = 0
     all_scores = []
     mean_scores = []
@@ -343,6 +369,8 @@ def train():
     total_invalid_moves = 0
     invalid_moves = []
 
+    total_games_won = 0
+
 
 
     while n_games < GAMES:
@@ -354,7 +382,9 @@ def train():
         else:
             game = QwixxGame([HeuristicPlayer("Robot"), qAgent])
 
-        game.run()
+        winner_name, winner_score = game.run()
+        if winner_name == "QAgent":
+            total_games_won += 1
         score = game.players[1].qwixx_card.calculate_score()
         qAgent.n_games += 1
         # qAgent.learning_rate = qAgent.learning_rate / (qAgent.n_games)
@@ -407,7 +437,7 @@ def train():
 
 
         if PRINT_GAME_INFO:
-            print(f"Game {n_games:5} QAgent score: {score:3} | Explores: {qAgent.n_explores:3} | Exploits: {qAgent.n_exploits:3} InadequateChecks: {qAgent.InadequateChecks:3} | InvalidDeactivates: {qAgent.InvalidDeactivates:3}")
+            print(f"Game {n_games:5} Winner: {winner_name:4} QAgent score: {score:3} | Explores: {qAgent.n_explores:3} | Exploits: {qAgent.n_exploits:3} InadequateChecks: {qAgent.InadequateChecks:3} | InvalidDeactivates: {qAgent.InvalidDeactivates:3}")
             print(qAgent.weights)
             print(qAgent.action_counts)
             
@@ -415,6 +445,7 @@ def train():
         
         qAgent.player_reset()
     
+    print("total_games_won", total_games_won)
     if EXPLOIT_ONLY:
         plt.title(f'Average Score of Agent over {n_games} games\nWeights used: {qAgent.get_best_weights()}')
     else:
@@ -435,6 +466,7 @@ def train():
     plt.show()
     print("average score:", average_score)
     print("best weights:", qAgent.best_weights)
+    
     return qAgent.weights
 
 # def train():

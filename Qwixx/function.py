@@ -226,8 +226,10 @@ def get_num_boxes_crossed_off(state, action):
 
 def get_rightmost_crossed_off_index(state, action):
     if action == 8:
-        return 1
+        return 0
     row = state['valid_cells'][action // 2]
+    
+    # print((get_right_index(row) + 1) / 11)
     return (get_right_index(row) + 1) / 11
 
 def will_action_result_in_points(state, action):
@@ -243,8 +245,8 @@ functions = [
     # cheese,
     getTotalCellsMissed2,
     get_num_boxes_crossed_off, 
-    # get_rightmost_crossed_off_index, 
-    willActionResultInStrikeAndIsLeading, 
+    get_rightmost_crossed_off_index,
+    # willActionResultInStrikeAndIsLeading, 
     # # will_result_in_lock_and_is_leading, 
     # is_invalid_action
     ]
