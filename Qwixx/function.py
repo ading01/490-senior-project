@@ -180,7 +180,7 @@ def is_invalid_action(state, action):
 
 def will_result_in_lock_and_is_leading(state, action):
     if action == 8:
-        return 1
+        return 0
     leading = is_leading(state, action)
     will_lock = willActionResultInLock(state, action)
     return will_lock * leading
@@ -242,12 +242,11 @@ def cheese(state, action):
     return (1 - getTotalCellsMissed2(state, action)) * is_invalid
 
 functions = [
-    # cheese,
     getTotalCellsMissed2,
     get_num_boxes_crossed_off, 
     get_rightmost_crossed_off_index,
-    # willActionResultInStrikeAndIsLeading, 
-    # # will_result_in_lock_and_is_leading, 
+    willActionResultInStrikeAndIsLeading, 
+    will_result_in_lock_and_is_leading, 
     # is_invalid_action
     ]
 

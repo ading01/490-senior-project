@@ -50,7 +50,7 @@ class QAgent(Player):
         self.gamma = 0.99
         self.step = 0.0001
         if EXPLOIT_ONLY:
-            self.weights =  [-1.4461000751133606, -0.07292251815457883, -0.5058877438501571] # [-1.2640389959626739, -0.9451892917177317, 0.18346097243470913] # [-1.279959348286468, -0.9389276994763408, 0.24330722784946257] #[-1.248825282210372, -0.9580416863700797, 0.21658277751757418] # [-1.4083951761175781, -1.123894187907306, 0.2947252261814512] # [-10.838601702360117, -4.447902378735281] # [-4.213611058893543, -6.599510175809286]
+            self.weights = [-1.316640702059542, -0.12708131942427892, -0.46199518912465143, 0.289121528627552, -0.0669370884076102] #[-1.376976493120759, -0.0653208861449142, -0.49825906757250876, 0.3737164290838795, -0.06249615654571766] # [-1.3834990044257112, -0.08734026750561809, -0.4885794061309719, 0.42170031980440015, -0.06046223231378747]# [-1.4461000751133606, -0.07292251815457883, -0.5058877438501571] # [-1.2640389959626739, -0.9451892917177317, 0.18346097243470913] # [-1.279959348286468, -0.9389276994763408, 0.24330722784946257] #[-1.248825282210372, -0.9580416863700797, 0.21658277751757418] # [-1.4083951761175781, -1.123894187907306, 0.2947252261814512] # [-10.838601702360117, -4.447902378735281] # [-4.213611058893543, -6.599510175809286]
         else:
             self.weights = [0 for i in range(len(functions))]
         self.best_weights = None
@@ -169,10 +169,6 @@ class QAgent(Player):
         
 
     def make_move(self, game, curr_state, action):
-        # print("\n")
-        # print(game.get_state())
-        # print("curr_state", curr_state)
-        # print("action", action)
         self.action_counts[action] += 1
         
         if action == 8:
@@ -267,7 +263,7 @@ class QAgent(Player):
 
 
     def do_skip(self, state):
-        threshold = 0.5
+        threshold = 0.4
 
         game_state = state["game_state"].value
         if state["already_moved"] == True or state["active_player"] == 0:
@@ -468,32 +464,6 @@ def train():
     print("best weights:", qAgent.best_weights)
     
     return qAgent.weights
-
-# def train():
-#     n_games = 0
-#     qAgent = QAgent("QAgentBigBrain")
-#     total_score = 0
-#     games = []
-#     all_scores = []
-#     mean_scores = []
-
-#     while n_games < GAMES:
-#         game = QwixxGame([HumanPlayer("Robot"), qAgent])
-#         game.run()
-#         score = game.players[1].qwixx_card.calculate_score()
-#         # print("game number", n_games, game.players[1].name, "score", score)
-#         total_score += score
-#         all_scores.append(score)
-#         games.append(n_games)
-#         n_games += 1
-    
-#         mean_scores.append(total_score / n_games)
-        
-#         qAgent.player_reset()
-#     plt.plot(all_scores, color = 'r')
-#     plt.plot(mean_scores, color = 'b')
-#     plt.show()
-#     return qAgent.weights
 
 if __name__ == "__main__":
     print(train())
