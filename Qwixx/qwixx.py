@@ -38,7 +38,7 @@ if DO_DRAW:
 
 
 CONSERVATIVE_THRESHOLD = 0
-ABSORB_STRIKE_THRESHOLD = 10
+ABSORB_STRIKE_THRESHOLD = 4
 
 PRINT_STUFF = False
 
@@ -161,6 +161,25 @@ class Player:
         self.player_surface = None
         self.is_made_move = False
         self.scores = [0]
+    
+    def distance_from_prev_crossed_out_cell(self, cell):
+        board = self.qwixx_card.board
+        row = cell.row
+        for box in board[row].cells:
+            if box.is_active:
+                return cell.column - box.column
+        
+        return 100
+
+    def get_card_score(self):
+        return self.qwixx_card.score
+
+    def get_num_locked_rows(self):
+        locked_rows = 0
+        for row in self.qwixx_card.board:
+            if row.is_locked:
+                locked_rows += 1
+        return locked_rows
     
     def record_score(self):
         self.scores.append(self.qwixx_card.score)
@@ -298,31 +317,10 @@ class HumanPlayer(Player):
                     if event.key == pygame.K_SPACE:
                         making_move = False
 
-
-class AgentPlayer(Player):
-    def __init__(self, name):
-        self.name = name
-        self.qwixx_card = QwixxCard(name)
-        self.player_screen = None
-        self.is_made_move = False
-    
-    def roll_dice(self, game):
-        game.roll_dice()
-    
-    def get_state(self, game):
-        state = game.get_state()
-        return state
-
-    def make_color_move(self, game):
-        pass
-
-    def make_optional_move(self, game):
-        pass
-    
-
     
 class HeuristicPlayer(Player):
     def __init__(self, name):
+        # super().__init__(name)
         self.name = name
         self.qwixx_card = QwixxCard(name)
         self.is_made_move = False
@@ -681,7 +679,6 @@ class QwixxCard:
                     
                     # print("reward, index", reward, index)
                     # multiplier = 11 - index
-                    my_print("deactiviating index:", index)
                     self.board[curr_row].deactivate_trailing_cells(index)
         if HUMAN_TEST:
             print(f"{self.player_name}crossed out cell: ", self.selected_cell.row, self.selected_cell.column, self.selected_cell.number)
@@ -840,10 +837,17 @@ class QwixxGame:
 
         return state
 
+    def get_opponent_locked_rows(self):
+        opponent_locked_rows = []
+        for player in self.players:
+            if player is not self.players[self.moving_player]:
+                return self.get_locked_rows(player)
     
-    def get_locked_rows(self):
+    def get_locked_rows(self, player=None):
+        if player is None:
+            player = self.moving_player
         locked_rows = 0
-        for row in self.players[self.moving_player].get_card().board:
+        for row in self.players[player].get_card().board:
             if row.is_locked:
                 locked_rows += 1
         return locked_rows
@@ -1030,6 +1034,8 @@ class QwixxGame:
                     player.qwixx_card.selected_cell = None
                     player.qwixx_card.valid_cells = []
                 self.game_state = GameState.COLOR_SELECTION
+                if self.is_game_over():
+                    self.game_state = GameState.GAME_OVER
                 self.moving_player = self.active_player
                 self.draw_game()
             elif self.game_state == GameState.COLOR_SELECTION:
@@ -1223,12 +1229,19 @@ def test_multiple_uncertainty():
     return average_score, standard_deviation
 
 
+def test_two_player():
+    players = [TwoPlayer("Allan"), HeuristicPlayer("robot2")]
+    game = QwixxGame(players)
+    game.run()
+
+
 if __name__ == "__main__":
     # players = [HumanPlayer("Allan"), HeuristicPlayer("robot2")]
     # game = QwixxGame(players)
     # game.run()
     # test_parameters()
     test_heuristic_player()
+    # test_two_player()
     # test_uncertainty()
     # print(test_multiple_uncertainty())
 

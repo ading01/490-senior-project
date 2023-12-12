@@ -215,6 +215,15 @@ def isCellSelectable(state, action, row, column):
 #     "locked_rows": 1
 # }
 
+# f(s,a) = { # marks in green if a = 0 ; 0 otherwise }
+def feature_function_generator(i, action):
+    def feature_function(s, a):
+        if action == a:
+            return s['num_crossed_out_cells'][i] / 10
+        else:
+            return 0
+    return feature_function
+
 
 def is_active_player_and_has_not_already_moved(state, action):
     pass
@@ -250,9 +259,15 @@ functions = [
     # is_invalid_action
     ]
 
+colors = ['red', 'yellow', 'green', 'blue']
+actions = range(9)  # Assuming 9 actions, numbered 0 through 8
+
+for i, color in enumerate(colors):
+    for action in actions:
+        functions.append(feature_function_generator(i, action))
+
 def create_feature_list(state, action):
     # print("state", state)
-    
     features = []
     feature_values = []
     # print(f"feature_values with action {action}")
@@ -261,9 +276,9 @@ def create_feature_list(state, action):
         features.append(feature_value)
         feature_values.append((function.__name__, feature_value))
     #     print(f"{function.__name__}: {feature_value}")
-
     
-
+    # print("features", features)
+    # print("len(features)", len(features))
     
     return features, feature_values
 
