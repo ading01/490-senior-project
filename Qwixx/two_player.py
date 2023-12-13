@@ -14,9 +14,6 @@ class TwoPlayer(Player):
     def roll_dice(self, game):
         game.roll_dice()
 
-    def make_color_move(self, game):
-        game.make_color_move(self.name)
-
     def get_num_opponent_locked_rows(self, game):
         for player in game.players:
             if player is not self:
@@ -165,6 +162,7 @@ class TwoPlayer(Player):
         return candidates
 
     def make_color_move(self, game):
+        self.n_moves += 1
         white_dice = game.dice[0:2]
         colored_dice = game.dice[2:6]
         candidates = []
@@ -239,14 +237,11 @@ class TwoPlayer(Player):
         min_score_diff = self.get_min_score_diff(game)
 
         opponent_locked_rows = self.get_num_opponent_locked_rows(game)
-        print("min score diff", min_score_diff)
         self_locked_rows = self.get_num_locked_rows()
         if self_locked_rows == 1 and min_score_diff <= 6 and len(locking_moves) > 0:
-            print("locking move")
             return (locking_moves[0], -10)
 
         if self_locked_rows == 0 and min_score_diff <= 6 and len(locking_moves) > 0:
-            print("locking move")
             return (locking_moves[0], -10)
 
         threshold = ABSORB_STRIKE_THRESHOLD
@@ -308,6 +303,7 @@ class TwoPlayer(Player):
             return choice
 
     def make_optional_move(self, game):
+        self.n_moves += 1
         #  computer
         # instead of determining left most, determine which is closest to a cell to ther right
         optional_cells = self.qwixx_card.valid_cells
@@ -459,38 +455,7 @@ def play_x_num_games(num_games):
     return game_scores
 
 
-# def calculate_uncertainty(player1_scores, player2_scores, M=100):
-#     # Ensure the lists are of the same length
-#     if len(player1_scores) != len(player2_scores):
-#         raise ValueError(
-#             "Both player1_scores and player2_scores must have the same length."
-#         )
-
-#     # Calculate the lead history (score difference)
-#     lead_history = np.array(player1_scores) - np.array(player2_scores)
-
-#     # Define the interpolation line points
-#     interpolation_line = [(0, 0), (M, 1)]
-
-#     # Calculate the slope and intercept of the interpolation line
-#     slope = (interpolation_line[1][1] - interpolation_line[0][1]) / (
-#         interpolation_line[1][0] - interpolation_line[0][0]
-#     )
-#     intercept = interpolation_line[0][1] - slope * interpolation_line[0][0]
-
-#     # Calculate the estimated lead values at each time point
-#     estimated_lead_values = np.linspace(0, M, len(player1_scores)) * slope + intercept
-
-#     # Calculate the distance between the lead history and the interpolation line
-#     distances = np.abs(lead_history - estimated_lead_values)
-
-#     # Calculate the average distance
-#     average_distance = np.mean(distances)
-
-#     return average_distance * len(player1_scores)
-
-
-def calculate_uncertainty2(player1_scores, player2_scores):
+def calculate_uncertainty(player1_scores, player2_scores):
     if player1_scores[-1] > player2_scores[-1]:
         winning_scores = player1_scores
         losing_scores = player2_scores
@@ -524,14 +489,11 @@ def calculate_uncertainty2(player1_scores, player2_scores):
             "Both lead_history and estimated_scores must have the same length."
         )
 
-    total = 0
-    for i in range(len(lead_history)):
-        total += estimated_lead_values[i] - lead_history[i]
-    print(
-        "average",
-        (np.mean(estimated_lead_values) - np.mean(lead_history)) * len(lead_history),
-    )
-    return total
+    # total = 0
+    # for i in range(len(lead_history)):
+    #     total += estimated_lead_values[i] - lead_history[i]
+
+    return np.mean(estimated_lead_values) - np.mean(lead_history)
 
 
 def plot_uncertainty(player1_scores, player2_scores, M=100):
@@ -561,6 +523,8 @@ def plot_uncertainty(player1_scores, player2_scores, M=100):
     x_values = np.linspace(0, len(player1_scores) - 1, len(player1_scores))
     estimated_lead_values = x_values * slope + intercept
 
+    plt.axhline(0, color="black", linewidth=1)
+
     plt.plot(player1_scores, label="Player 1 Scores", color="blue")
     plt.plot(player2_scores, label="Player 2 Scores", color="orange")
 
@@ -581,144 +545,229 @@ def plot_uncertainty(player1_scores, player2_scores, M=100):
 
     # Adding legend and labels
     plt.legend()
-    plt.xlabel("Time")
-    plt.ylabel("Scores/Lead")
+    plt.xlabel("Turns")
+    plt.ylabel("Scores")
     plt.title("Player Scores and Lead History with Interpolation Line")
     plt.show()
 
 
-# def plot_uncertainty(player1_scores, player2_scores, M=100):
-#     if player1_scores[-1] > player2_scores[-1]:
-#         winning_scores = player1_scores
-#         losing_scores = player2_scores
-#     else:
-#         winning_scores = player2_scores
-#         losing_scores = player1_scores
+def plot_pie_chart(ax, data, title):
+    non_completion_count = sum(data)
+    completion_count = len(data) - non_completion_count
+    sizes = [completion_count, non_completion_count]
+    labels = ["Completion", "Non-Completion"]
+    ax.pie(
+        sizes,
+        labels=labels,
+        autopct="%1.1f%%",
+        startangle=90,
+        colors=["blue", "orange"],
+    )
+    ax.axis("equal")  # Equal aspect ratio ensures that pie chart is circular.
+    ax.set_title(title)
 
-#     lead_history = np.array(winning_scores) - np.array(losing_scores)
 
-#     # Define the interpolation line points
-#     interpolation_line = [
-#         (0, 0),
-#         (len(player1_scores), max(winning_scores[-1], winning_scores[-1])),
-#     ]
+def get_metrics_for_n_games(n_games):
+    uncertainty_scores = []
+    all_lead_changes = []
+    all_dramas = []
+    all_durations = []
+    all_completions = []
+    winning_scores = []
 
-#     slope = (interpolation_line[1][1] - interpolation_line[0][1]) / (
-#         interpolation_line[1][0] - interpolation_line[0][0]
+    for _ in range(n_games):
+        (
+            uncertainty_score,
+            lead_changes,
+            drama,
+            duration,
+            completion,
+            winning_score,
+        ) = get_metrics()
+        uncertainty_scores.append(uncertainty_score)
+        all_lead_changes.append(lead_changes)
+        all_dramas.append(drama)
+        all_durations.append(duration)
+        all_completions.append(completion)
+        winning_scores.append(winning_score)
+
+    print("uncertainty_score", uncertainty_score)
+    print("lead_changes", lead_changes)
+    print("drama", drama)
+    print("duration", duration)
+    print("completion", completion)
+    print("winning_score", winning_score)
+
+    fig, axs = plt.subplots(3, 2, figsize=(12, 10))  # Adjusted for better spacing
+
+    # Plotting each metric as histogram
+    plot_histogram(
+        axs[0, 0],
+        uncertainty_scores,
+        20,
+        f"Uncertainty Scores over {n_games} games",
+        "Uncertainty",
+    )
+    plot_histogram(
+        axs[0, 1],
+        all_lead_changes,
+        range(1, max(all_lead_changes) + 2),
+        f"Lead Changes per Game over {n_games} games",
+        "Number of Changes",
+    )
+    plot_histogram(
+        axs[1, 0], all_dramas, 20, f"Drama per game over {n_games} games", "Drama Score"
+    )
+    plot_histogram(
+        axs[1, 1],
+        all_durations,
+        20,
+        f"Duration in moves per game over {n_games} games",
+        "Duration (moves)",
+    )
+
+    plot_pie_chart(axs[2, 0], all_completions, "Completion Rate")
+
+    plot_histogram(
+        axs[2, 1],
+        winning_scores,
+        20,
+        f"Winning score per game over {n_games} games",
+        "Winning Score",
+    )
+
+    # Hide the last subplot (bottom right) as we have only 5 metrics
+    # axs[2, 1].axis("off")
+
+    # Adjusting layout for better spacing and visibility
+    plt.tight_layout(pad=3.0)
+
+    # Display the plot
+    plt.show()
+
+
+# Function to add mean and std dev to plots
+# def add_mean_std(ax, data, color="red"):
+#     mean = np.mean(data)
+#     std = np.std(data)
+#     ax.axvline(
+#         mean,
+#         color=color,
+#         linestyle="dashed",
+#         linewidth=1,
+#         label=f"Average Score: {mean:.2f}",
 #     )
-#     intercept = interpolation_line[0][1] - slope * interpolation_line[0][0]
+#     ax.axvline(
+#         mean + std,
+#         color="orange",
+#         linestyle="dashed",
+#         linewidth=1,
+#         label=f"Avg + Std Dev: {mean + std:.2f}",
+#     )
+#     ax.axvline(
+#         mean - std,
+#         color="yellow",
+#         linestyle="dashed",
+#         linewidth=1,
+#         label=f"Avg - Std Dev: {mean - std:.2f}",
+#     )
+#     ax.legend()
 
-#     x_values = np.linspace(0, len(winning_scores), len(winning_scores))
-#     estimated_lead_values = x_values * slope + intercept
 
-#     plt.plot(player1_scores, label="Player 1 Scores", color="blue")
-#     plt.plot(player2_scores, label="Player 2 Scores", color="orange")
+def add_mean_std_lines(ax, data, color="orange"):
+    mean = np.mean(data)
+    std = np.std(data)
+    ax.axvline(
+        mean, color="red", linestyle="dashed", linewidth=1, label=f"Average: {mean:.2f}"
+    )
+    ax.axvline(
+        mean + std,
+        color=color,
+        linestyle="dashed",
+        linewidth=1,
+        label=f"+/- 1 Std Dev: {std:.2f}",
+    )
+    ax.axvline(mean - std, color=color, linestyle="dashed", linewidth=1)
+    ax.legend()
 
-#     # Plotting the lead history
-#     plt.plot(lead_history, label="Lead History", color="red", linestyle="dashed")
 
-#     # Plotting the interpolation line
-#     plt.plot(x_values, estimated_lead_values, label="Interpolation Line", color="grey")
-
-#     # Plotting the distances as grey dashed lines
-#     for i in range(len(lead_history)):
-#         plt.plot(
-#             [i, i],
-#             [lead_history[i], estimated_lead_values[i]],
-#             color="grey",
-#             linestyle="dashed",
-#         )
-
-#     # Adding legend and labels
-#     plt.legend()
-#     plt.xlabel("Time")
-#     plt.ylabel("Scores/Lead")
-#     plt.title("Player Scores and Lead History with Interpolation Line")
-#     plt.show()
+def plot_histogram(ax, data, bins, title, x_label):
+    count, bins, ignored = ax.hist(
+        data, bins=bins, alpha=0.7, color="blue", edgecolor="black"
+    )
+    add_mean_std_lines(ax, data)
+    ax.set_title(title)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel("Games")
 
 
 def get_metrics():
-    game_scores = play_x_num_games(1)
-    player1_scores = game_scores[0][0]
-    player2_scores = game_scores[0][1]
+    players = [TwoPlayer("Player1"), TwoPlayer("Player2")]
+    game = QwixxGame(players)
+    winning_name, winning_score = game.run()
+
+    player1_scores = players[0].scores
+    player2_scores = players[1].scores
 
     uncertainty_score = calculate_uncertainty(player1_scores, player2_scores)
-    uncertainty_score2 = calculate_uncertainty2(player1_scores, player2_scores)
     print("uncertainty_score", uncertainty_score)
-    print("uncertainty_score2", uncertainty_score2)
-    plot_uncertainty(player1_scores, player2_scores)
+    lead_changes = count_lead_changes(player1_scores, player2_scores)
+    print("lead_changes", lead_changes)
+    drama = calculate_drama(player1_scores, player2_scores)
+    # drama2 = calculate_drama1(player1_scores, player2_scores)
+    print("drama", drama)
+    # print("drama2", drama2)
 
-    # lead_change_score = test_lead_change(player1_scores, player2_scores)
-    # killer_moves_score = test_killer_moves(player1_scores, player2_scores)
+    duration = test_duration(players[0].n_moves, players[1].n_moves)
+    completion = test_completion(player1_scores, player2_scores)
+    # plot_uncertainty(player1_scores, player2_scores)
 
-
-def test_uncertainty(player1_scores, player2_scores):
-    print("len", len(player1_scores))
-    print("p1, p2 scores", player1_scores, player2_scores)
-
-    uncertainty = calculate_uncertainty(player1_scores, player2_scores)
-
-    time_points = range(1, len(player1_scores) + 1)
-
-    # Plotting the scores
-    plt.plot(time_points, player1_scores, label="Player 1", marker="o")
-    plt.plot(time_points, player2_scores, label="Player 2", marker="o")
-
-    score_difference = np.array(player1_scores) - np.array(player2_scores)
-    plt.plot(
-        time_points,
-        score_difference,
-        label="Score Difference (P1 - P2)",
-        color="red",
-        linestyle="--",
-    )
-
-    # Determine the slope of the grey line (assuming it starts at the origin)
-    final_score_highest_player = max(player1_scores[-1], player2_scores[-1])
-    slope = final_score_highest_player / len(player1_scores)
-
-    # Plot the grey line from (0, 0) to the last point of the player with the higher score at the end
-    plt.plot(
-        [0, len(player1_scores)],
-        [0, final_score_highest_player],
-        label="Line to Final Score (Highest Player)",
-        linestyle="-",
-        color="grey",
-    )
-
-    # Plot the grey dotted lines from the red line to the grey line
-    uncertainty_score = find_area(score_difference, slope)
-    print("uncertainty_score", uncertainty_score)
-
-    # Adding labels and a legend
-    plt.xlabel("Time")
-    plt.ylabel("Scores")
-    plt.title("Player Scores Over Time with Uncertainty and Line to Final Score")
-    plt.legend()
-
-    # # Display the plot
-    plt.show()
-    return uncertainty_score
+    return uncertainty_score, lead_changes, drama, duration, completion, winning_score
 
 
-def test_lead_change():
-    #
-    pass
+def count_lead_changes(player1_score, player2_score):
+    lead_changes = 0
+    current_leader = None
+
+    for score1, score2 in zip(player1_score, player2_score):
+        if score1 > score2:
+            new_leader = "player1"
+        elif score2 > score1:
+            new_leader = "player2"
+        else:
+            new_leader = "tie"
+
+        if current_leader and new_leader != current_leader and new_leader != "tie":
+            lead_changes += 1
+
+        current_leader = new_leader
+
+    return lead_changes
+
+
+def test_lead_change(player1_scores, player2_scores):
+    return count_lead_changes(player1_scores, player2_scores)
 
 
 def test_killer_moves():
     pass
 
 
-def test_completion():
+def test_completion(player1_scores, player2_scores):
+    if player1_scores[-1] == player2_scores[-1]:
+        return 1
+    return 0
+
     # change code around to say that if there is a tie, return something else
-    pass
 
 
-def test_duration():
-    # show which games have a lower standard deviation,
-    # which would signify more predicable game play times
-    pass
+def test_duration(player1_n_moves, player2_n_moves):
+    return player1_n_moves + player2_n_moves
+
+
+# def calculate_drama(player1_score, player2_score):
+#     # find area that the winning player was losing
+#     pass
 
 
 def test_drama():
@@ -726,6 +775,103 @@ def test_drama():
     pass
 
 
+def calculate_drama(player1_scores, player2_scores):
+    # Convert lists to numpy arrays if necessary
+    player1_scores = np.array(player1_scores)
+    player2_scores = np.array(player2_scores)
+
+    # Determining the eventual winner and loser
+    if player1_scores[-1] > player2_scores[-1]:
+        E_w = player1_scores
+        E_l = player2_scores
+    else:
+        E_w = player2_scores
+        E_l = player1_scores
+
+    # Initialize sum of severity for losing positions
+    sum_severity_losing_positions = 0
+    # Initialize count of losing positions
+    count_losing_positions = 0
+
+    # Go through each move to calculate the parts of the drama index
+    for n in range(len(E_w)):
+        if E_w[n] < E_l[n]:  # Check if the winner is in a losing position at move n
+            sum_severity_losing_positions += np.sqrt(E_l[n] - E_w[n])
+            count_losing_positions += 1
+
+    # Calculate the drama index
+    A_dram = (
+        sum_severity_losing_positions / count_losing_positions
+        if count_losing_positions != 0
+        else 0
+    )
+
+    if A_dram == 0:
+        return 1
+
+    return A_dram
+
+
+# def calculate_drama(player1_scores, player2_scores):
+#     # Determining the eventual winner and loser
+#     if player1_scores[-1] > player2_scores[-1]:
+#         winner = player1_scores
+#         loser = player2_scores
+#     else:
+#         winner = player2_scores
+#         loser = player1_scores
+
+#     winner = np.array(winner)
+#     loser = np.array(loser)
+
+#     # Calculating the number of moves where the eventual winner was in a losing position
+#     losing_positions = winner < loser
+#     count_losing_positions = np.sum(losing_positions)
+
+#     # Calculating the severity of each losing position
+#     severity_of_positions = np.sqrt(np.abs(winner - loser)) * losing_positions
+
+#     # Calculating the drama score
+#     A_dram = (
+#         np.sum(severity_of_positions) / count_losing_positions
+#         if count_losing_positions != 0
+#         else 0
+#     )
+
+#     return A_dram
+
+
+def calculate_drama1(player1_scores, player2_scores):
+    if len(player1_scores) != len(player2_scores):
+        raise ValueError("Both player scores must have the same length.")
+
+    if player1_scores[-1] > player2_scores[-1]:
+        winning_scores = player1_scores
+        losing_scores = player2_scores
+    else:
+        winning_scores = player2_scores
+        losing_scores = player1_scores
+
+    lead_history = np.array(winning_scores) - np.array(losing_scores)
+
+    total_negatives = 0
+    num_negatives = 0
+
+    for points in lead_history:
+        if points < 0:
+            total_negatives += points
+            num_negatives += 1
+
+    # Define the interpolation line to intersect the winning player's last point
+
+    # total = 0
+    # for i in range(len(lead_history)):
+    #     total += estimated_lead_values[i] - lead_history[i]
+
+    return total_negatives
+
+
 if __name__ == "__main__":
     # test_two_player()
-    get_metrics()
+    # get_metrics()
+    get_metrics_for_n_games(10000)
