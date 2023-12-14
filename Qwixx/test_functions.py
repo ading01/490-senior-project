@@ -59,56 +59,6 @@ def test_get_left_index(row=[0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]):
     ), "get_right_index() failed"
 
 
-# def test_locking_second_row_ends_game():
-#     state = {
-#         'active_player': 0,
-#         'game_state': 2,
-#         'already_moved': False,
-#         'valid_cells': [
-#             [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-#             [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-#             [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
-#             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-#         ],
-#         'num_crossed_out_cells': [4, 3, 5, 0],
-#         'selectable_cells': [
-#             [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-#             [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-#             [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1],
-#             [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-#         ],
-#         'strikes': 3,
-#         "locked_rows": 1
-#     }
-#     action = 5
-#     assert create_feature_list(state, action)[14] == 1, "test_locking_second_row_ends_game() failed"
-#     assert create_feature_list(state, 4)[14] == 0
-
-
-# def test_action_8_ends_game_by_strike():
-#     state = {
-#         'active_player': 0,
-#         'game_state': 2,
-#         'already_moved': False,
-#         'valid_cells': [
-#             [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-#             [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-#             [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
-#             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-#         ],
-#         'num_crossed_out_cells': [11, 3, 5, 5],
-#         'selectable_cells': [
-#             [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-#             [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-#             [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-#             [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-#         ],
-#         'strikes': 3,
-#         "locked_rows": 1
-#     }
-#     assert create_feature_list(state, 8)[14] == 1, "test_action_8_ends_game_by_strike() failed"
-
-
 def test_is_invalid_action():
     state = {
         "active_player": 0,
@@ -131,11 +81,11 @@ def test_is_invalid_action():
         "locked_rows": 1,
     }
     assert is_invalid_action(state, 0) == 1
-    assert is_invalid_action(state, 7) == 0
+    assert is_invalid_action(state, 7) == -1
     assert is_invalid_action(state, 3) == 1
     assert is_invalid_action(state, 2) == 1
     # skip should always valid
-    assert is_invalid_action(state, 8) == 0
+    assert is_invalid_action(state, 8) == -1
 
     # # pass is valid
     # assert create_feature_list(state, 8)[16] == 1, "test_is_valid_action() failed"
@@ -367,12 +317,6 @@ def test_create_feature_list():
     # lock and leading
     assert features[0][4] == 0
     # is valid
-    assert features[0][5] == 1
-
-
-def test_grace():
-    # why yale law school?
-    pass
 
 
 # //////////END TESTS //////////

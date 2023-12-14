@@ -20,7 +20,7 @@ INSTRUCTION_FONT = pygame.font.Font(None, 40)
 CPU_WAIT_TIME = 0
 
 
-DO_DRAW = False
+DO_DRAW = True
 
 # Constants for screen dimensions
 SCREEN_WIDTH, SCREEN_HEIGHT = 1600, 800
@@ -213,6 +213,7 @@ class Player:
 
 class HumanPlayer(Player):
     def __init__(self, name):
+        super().__init__(name)
         self.name = name
         self.qwixx_card = QwixxCard(name)
         self.player_screen = None
@@ -847,7 +848,7 @@ class QwixxCard:
 
 
 class QwixxGame:
-    def __init__(self, players):
+    def __init__(self, players, keep_showing=False):
         self.players = players
         self.active_player = 0  # Index of the active player
         self.moving_player = 0
@@ -870,6 +871,7 @@ class QwixxGame:
         self.warning_text = ""
         self.game_state_text = ""
         self.winner_text = None
+        self.keep_showing = keep_showing
 
         # Create player screens once during initialization
         self.player1_screen = pygame.Surface((SCREEN_WIDTH // 2, SCREEN_HEIGHT - 200))
@@ -1151,7 +1153,8 @@ class QwixxGame:
                 end_time = datetime.now()
                 time_diff = end_time - start_time
                 # print("total time", time_diff, "winner:", winner.name, max_score)
-                running = False
+                if not self.keep_showing:
+                    running = False
                 if redraw:
                     self.draw_game()
                     redraw = True
@@ -1328,12 +1331,6 @@ def test_multiple_uncertainty():
     standard_deviation = math.sqrt(variance)
 
     return average_score, standard_deviation
-
-
-def test_two_player():
-    players = [TwoPlayerHeuristic("Allan"), GreedyHeuristicPlayer("robot2")]
-    game = QwixxGame(players)
-    game.run()
 
 
 if __name__ == "__main__":

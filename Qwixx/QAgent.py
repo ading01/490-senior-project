@@ -7,7 +7,7 @@ from function import *
 from qwixx import *
 
 # from helper import plot
-EXPLOIT_ONLY = False
+EXPLOIT_ONLY = True
 HUMAN_TEST = False
 HUMAN_PRINT = False
 PRINT_GAME_INFO = True
@@ -263,9 +263,9 @@ class QAgent(Player):
                 if r_ind > -1 and active_row[r_ind] == 0:
                     if r_ind == 10:
                         if state["num_crossed_out_cells"][action] >= 5:
-                            valid_actions.append(action * 2 + 1)
+                            valid_actions.append((action * 2) + 1)
                     else:
-                        valid_actions.append(action * 2 + 1)
+                        valid_actions.append((action * 2) + 1)
 
         valid_actions.append(8)
         self.valid_actions = valid_actions
