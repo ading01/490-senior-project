@@ -4,6 +4,25 @@
 
 This project aims to analyze and compare game quality and strategy effectiveness across the original game of Qwixx and two of its variants using various player types including AI and human players.
 
+## Environment Setup
+
+This section provides instructions for setting up the environment required for this project. Ensure you have Python 3.11 installed on your system.
+
+### Required Packages
+
+The project dependencies are listed in the `Pipfile`. To install these packages, follow these steps:
+
+1. **Install Dependencies**: If you have `pipenv` installed, run the following command to install the required packages:
+
+   ```bash
+   pipenv install
+   ```
+
+2. **Activate Environment**: After the installation is complete, activate the pipenv environment by running:
+   ```bash
+   pipenv shell
+   ```
+
 ## Files Description
 
 - `play.py`: The main script for playing the game. It provides access to different types of players:
