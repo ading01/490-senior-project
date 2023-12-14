@@ -261,19 +261,27 @@ def create_feature_list(state, action):
 
 
 if __name__ == "__main__":
+    data = {
+        "active_player": 0,
+        "game_state": 2,
+        "already_moved": False,
+        "valid_cells": [
+            [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+        ],
+        "num_crossed_out_cells": [11, 3, 5, 5],
+        "selectable_cells": [
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+            [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
+        ],
+        "strikes": 3,
+        "locked_rows": 1,
+    }
+    actions = [0, 1, 2, 3, 4, 5, 6, 7, 8]
+
     for i in actions:
         print(create_feature_list(data, action=i))
-
-"""
-
-Features:
-[0]: right_most_inactive_cell_in_red_row
-[1]: right_most_inactive_cell_in_yellow_row
-[2]: right_most_inactive_cell_in_green_row
-[3]: right_most_inactive_cell_in_blue_row
-[4]: number_of_marked_boxes_in_red_row
-[5]: number_of_marked_boxes_in_yellow_row
-[6]: number_of_marked_boxes_in_green_row
-[7]: number_of_marked_boxes_in_blue_row
-
-"""
