@@ -695,7 +695,7 @@ class QwixxCard:
                 self.selected_cell.number,
             )
 
-        if self.is_game_over():
+        if self.is_game_over() and self.calculate_score() > 50:
             return 30
 
         final_score = self.calculate_score()
