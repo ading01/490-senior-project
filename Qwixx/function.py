@@ -16,14 +16,15 @@ actions = [0, 1, 2, 3, 4, 5, 6, 7, 8]
 # action 8 -> skip
 
 
-
 # ///////////////helper functions///////////////
 
+
 def get_right_index(row):
-    for i in range(len(row) -1, -1, -1):
+    for i in range(len(row) - 1, -1, -1):
         if row[i] == 1:
             return i
     return -1
+
 
 def get_left_index(row):
     for i in range(len(row)):
@@ -31,9 +32,10 @@ def get_left_index(row):
             return i
     return 11
 
+
 def is_leading(state, action):
-    opponent_score = state['opponent_score']
-    player_score = state['player_score']
+    opponent_score = state["opponent_score"]
+    player_score = state["player_score"]
 
     if player_score > opponent_score:
         return 1
@@ -42,12 +44,12 @@ def is_leading(state, action):
     else:
         return -1
 
+
 # ///////////////helper functions///////////////
 
 
-
 # How many boxes would the action miss? (negative weight)
-# Rightmost box that is crossed off (slightly negative weight) — I might eliminate this one 
+# Rightmost box that is crossed off (slightly negative weight) — I might eliminate this one
 # How many boxes are there already crossed off in the row (positive weight)
 # Will_action_result_in_first_strike_and_is_leading
 # …(same for 2, 3, 4th strike)
@@ -56,37 +58,34 @@ def is_leading(state, action):
 # is_active_player_and_has_not_moved (slightly positive) -> either a 0 or 1
 
 
-
 def getRightMostInactiveCellsInRow(state, actiion):
     ans = []
     for row_index in range(4):
-        right_most_inactive_cell_in_row = getRightMostInactiveCellInRow(state, action, row_index)
+        right_most_inactive_cell_in_row = getRightMostInactiveCellInRow(
+            state, action, row_index
+        )
         ans.append(right_most_inactive_cell_in_row)
     return ans
 
+
 def getRightMostInactiveCellInRow(state, action, row_index):
-    board = state['valid_cells']
+    board = state["valid_cells"]
     row = board[row_index]
     for i in range(len(row)):
         if row[i] == 0:
             return i / 11
     return 0
 
-# def getTotalMarkedCellsInRow(state, action, color):
-#     pass
 
-
-def getTotalCellsMissed2(state, action):
+def getTotalCellsMissed(state, action):
     if action == 8:
         return 1
 
-    board = state['valid_cells']
+    board = state["valid_cells"]
     row = board[action // 2]
     right_most_crossed_off_cell = get_right_index(row)
-    # if right_most_crossed_off_cell == 0:
-    #     right_most_crossed_off_cell = -1
-    
-    selectable_row = state['selectable_cells'][action // 2]
+
+    selectable_row = state["selectable_cells"][action // 2]
 
     if action % 2 == 0:
         # get left
@@ -99,24 +98,25 @@ def getTotalCellsMissed2(state, action):
         # get right
         r_selectable_cell = get_right_index(selectable_row)
         if r_selectable_cell - right_most_crossed_off_cell > 0:
-            return (r_selectable_cell - right_most_crossed_off_cell - 1)  / 10
+            return (r_selectable_cell - right_most_crossed_off_cell - 1) / 10
         else:
             return 1
+
 
 def is_trying_to_lock(state, action):
     if action == 8:
         return 1
-    
+
     if action % 2 == 0:
         # left
-        r_ind = get_right_index(state['selectable_cells'][action // 2])
+        r_ind = get_right_index(state["selectable_cells"][action // 2])
         if r_ind == 10:
             return 1
     else:
-        l_ind = get_left_index(state['selectable_cells'][action // 2])
+        l_ind = get_left_index(state["selectable_cells"][action // 2])
         if l_ind == 0:
             return 0
-    
+
     return 0
 
 
@@ -126,14 +126,14 @@ def willActionResultInLock(state, action):
 
     if state["num_crossed_out_cells"][action // 2] < 5:
         return 0
-    
+
     if action % 2 == 1:
         # right
-        if get_right_index(state['selectable_cells'][action // 2]) == 10:
+        if get_right_index(state["selectable_cells"][action // 2]) == 10:
             return 1
     else:
         # left
-        if get_left_index(state['selectable_cells'][action // 2]) == 10:
+        if get_left_index(state["selectable_cells"][action // 2]) == 10:
             return 1
     return 0
 
@@ -154,29 +154,32 @@ def willActionEndGame(state, action):
     else:
         return 0
 
+
 def is_invalid_action(state, action):
     if action == 8:
         return -1
 
-    right_most_inactive_cell_in_row = getRightMostInactiveCellInRow(state, action, action // 2) * 11
+    right_most_inactive_cell_in_row = (
+        getRightMostInactiveCellInRow(state, action, action // 2) * 11
+    )
     if action % 2 == 0:
         # left
-        left_ind = get_left_index(state['selectable_cells'][action // 2])
+        left_ind = get_left_index(state["selectable_cells"][action // 2])
         # if 12th box and less than 5 checks, return 1
 
-        if left_ind == 10 and state['num_crossed_out_cells'][action // 2] < 5:
+        if left_ind == 10 and state["num_crossed_out_cells"][action // 2] < 5:
             return 1
 
         if left_ind <= right_most_inactive_cell_in_row:
             return 1
     else:
-        right_ind = get_right_index(state['selectable_cells'][action // 2])
-        if right_ind == 10 and state['num_crossed_out_cells'][action // 2] < 5:
+        right_ind = get_right_index(state["selectable_cells"][action // 2])
+        if right_ind == 10 and state["num_crossed_out_cells"][action // 2] < 5:
             return 1
         if right_ind <= right_most_inactive_cell_in_row:
             return 1
-    
     return -1
+
 
 def will_result_in_lock_and_is_leading(state, action):
     if action == 8:
@@ -186,60 +189,32 @@ def will_result_in_lock_and_is_leading(state, action):
     return will_lock * leading
 
 
-
-def isCellSelectable(state, action, row, column):
-    pass
-
-# functions_list = [getRightMostInactiveCellInRow, getTotalCellsMissed2, willActionResultInLock, willActionResultInFirstStrike, willActionResultInSecondStrike, willActionResultInThirdStrike, willActionResultInFourthStrike, willActionEndGame]
-
-# test_state = []
-
-# data = {
-#     'active_player': 0,
-#     'game_state': 2,
-#     'already_moved': False,
-#     'valid_cells': [
-#         [1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0],
-#         [1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
-#         [1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0],
-#         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-#     ],
-#     'num_crossed_out_cells': [11, 3, 5, 5],
-#     'selectable_cells': [
-#         [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-#         [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0],
-#         [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
-#         [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0]
-#     ],
-#     'strikes': 3,
-#     "locked_rows": 1
-# }
-
-# f(s,a) = { # marks in green if a = 0 ; 0 otherwise }
 def feature_function_generator(i, action):
     def feature_function(s, a):
         if action == a:
-            return s['num_crossed_out_cells'][i] / 10
+            return s["num_crossed_out_cells"][i] / 10
         else:
             return 0
+
     return feature_function
 
 
 def is_active_player_and_has_not_already_moved(state, action):
     pass
 
+
 def get_num_boxes_crossed_off(state, action):
     if action == 8:
         return 0
-    return state['num_crossed_out_cells'][action // 2] / 10
+    return state["num_crossed_out_cells"][action // 2] / 10
+
 
 def get_rightmost_crossed_off_index(state, action):
     if action == 8:
         return 0
-    row = state['valid_cells'][action // 2]
-    
-    # print((get_right_index(row) + 1) / 11)
+    row = state["valid_cells"][action // 2]
     return (get_right_index(row) + 1) / 11
+
 
 def will_action_result_in_points(state, action):
     num_x_cells = state["num_crossed_out_cells"][action // 2]
@@ -248,23 +223,25 @@ def will_action_result_in_points(state, action):
 
 def cheese(state, action):
     is_invalid = is_invalid_action(state, action)
-    return (1 - getTotalCellsMissed2(state, action)) * is_invalid
+    return (1 - getTotalCellsMissed(state, action)) * is_invalid
+
 
 functions = [
-    getTotalCellsMissed2,
-    get_num_boxes_crossed_off, 
+    getTotalCellsMissed,
+    get_num_boxes_crossed_off,
     get_rightmost_crossed_off_index,
-    willActionResultInStrikeAndIsLeading, 
-    will_result_in_lock_and_is_leading, 
-    # is_invalid_action
-    ]
+    willActionResultInStrikeAndIsLeading,
+    will_result_in_lock_and_is_leading,
+    # is_invalid_action,
+]
 
-colors = ['red', 'yellow', 'green', 'blue']
-actions = range(9)  # Assuming 9 actions, numbered 0 through 8
+# colors = ["red", "yellow", "green", "blue"]
+# actions = range(9)  # Assuming 9 actions, numbered 0 through 8
 
-for i, color in enumerate(colors):
-    for action in actions:
-        functions.append(feature_function_generator(i, action))
+# for i, color in enumerate(colors):
+#     for action in actions:
+#         functions.append(feature_function_generator(i, action))
+
 
 def create_feature_list(state, action):
     # print("state", state)
@@ -276,15 +253,11 @@ def create_feature_list(state, action):
         features.append(feature_value)
         feature_values.append((function.__name__, feature_value))
     #     print(f"{function.__name__}: {feature_value}")
-    
+
     # print("features", features)
     # print("len(features)", len(features))
-    
+
     return features, feature_values
-
-
-
-
 
 
 if __name__ == "__main__":

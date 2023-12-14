@@ -27,10 +27,12 @@ SCREEN_WIDTH, SCREEN_HEIGHT = 1600, 800
 
 if HUMAN_TEST:
     DO_DRAW = True
+    # Create the main game window
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Two Player Game Example")
 
 if DO_DRAW:
+    # Create the main game window
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     pygame.display.set_caption("Two Player Game Example")
 
@@ -59,11 +61,6 @@ CELL_WIDTH = 40
 SPACE_BETWEEN_CELLS = CELL_HEIGHT + 10
 ROW_WIDTH = 850
 ROW_HEIGHT = 60
-
-
-# Create the main game window
-# screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-# pygame.display.set_caption("Two Player Game Example")
 
 # Create cards for the players
 player1_card = pygame.Surface((600, 300))
@@ -328,9 +325,9 @@ class HumanPlayer(Player):
                         making_move = False
 
 
-class HeuristicPlayer(Player):
+class GreedyHeuristicPlayer(Player):
     def __init__(self, name):
-        # super().__init__(name)
+        super().__init__(name)
         self.name = name
         self.qwixx_card = QwixxCard(name)
         self.is_made_move = False
@@ -363,7 +360,6 @@ class HeuristicPlayer(Player):
             for colored_die in colored_dice:
                 total = white_die.get_value() + colored_die.get_value()
                 color = colored_die.get_color()
-
                 for row in self.qwixx_card.board:
                     for cell in row.cells:
                         if (
@@ -372,7 +368,6 @@ class HeuristicPlayer(Player):
                             and cell.color == color
                         ):
                             candidates.append(cell)
-
         best_move = self.get_best_move(candidates)
 
         if best_move is None:
@@ -385,7 +380,7 @@ class HeuristicPlayer(Player):
                 try:
                     self.qwixx_card.selected_cell = best_move[0]
                     self.qwixx_card.cross_out_cell()
-                    game.record_scores()
+                    # game.record_scores()
                 except InadequateChecks:
                     my_print("INADEQITE CHECKS")
                     return
@@ -400,7 +395,7 @@ class HeuristicPlayer(Player):
             try:
                 self.qwixx_card.selected_cell = best_move[0]
                 self.qwixx_card.cross_out_cell()
-                game.record_scores()
+                # game.record_scores()
                 self.is_made_move = True
             except InadequateChecks:
                 my_print("INADEQITE CHECKS")
@@ -509,7 +504,7 @@ class HeuristicPlayer(Player):
                 try:
                     self.qwixx_card.selected_cell = best_optional_choice[0]
                     self.qwixx_card.cross_out_cell()
-                    game.record_scores()
+                    # game.record_scores()
                     self.is_made_move = True
                 except InadequateChecks:
                     my_print("inadequate checks")
@@ -524,7 +519,7 @@ class HeuristicPlayer(Player):
                 try:
                     self.qwixx_card.selected_cell = best_optional_choice[0]
                     self.qwixx_card.cross_out_cell()
-                    game.record_scores()
+                    # game.record_scores()
                 except InadequateChecks:
                     return
                 finally:
@@ -578,14 +573,6 @@ class Cell:
                 180 if self.rgb[2] == 255 else 0,
             )
             self.rgb = new_rgb
-
-    # def draw_cell(self, screen):
-    #     # for i in range(12):
-    #     pygame.draw.rect(screen, self.rgb, (self.x, self.y, 60, 40))
-    #     text = FONT.render(str(self.number), True, BLACK)
-    #     screen.blit(text, (self.x + 20, self.y + 5))
-    #     hit_box = pygame.Rect(self.x, self.y, 60, 40)
-    #     return (hit_box, self.x, self.y, self.row, self.column) # Include row index (i) in the hit box data
 
 
 class Row:
@@ -646,24 +633,6 @@ class Row:
                 return cell
         return None
 
-        # hit_boxes = []
-        # pygame.draw.rect(screen, WHITE, (self.x - 5, self.y - 5, 850, 70))
-        # for cell in self.cells:
-
-        #     screen.blit(cell.draw_cell(), cell.x, cell.y)
-
-        # if self.is_locked:
-        #     new_rgb = (180 if self.rgb[0] == 255 else 0,
-        #                 180 if self.rgb[1] == 255 else 0,
-        #                 180 if self.rgb[2] == 255 else 0)
-        #     pygame.draw.rect(screen, new_rgb, (self.x + 780, self.y , 60, 40))
-        # else:
-        #     pygame.draw.rect(screen, self.rgb, (self.x + 780, self.y , 60, 40))
-
-        # for cell in self.cells:
-        #     hit_boxes.append(cell.draw_cell(screen))
-        # return hit_boxes
-
     def deactivate_trailing_cells(self, index):
         if self.cells[index].is_active:
             if index == 10 and self.number_of_checks < 5:
@@ -705,7 +674,6 @@ class QwixxCard:
         return 10
 
     def cross_out_cell(self):
-        # multiplier = 1
         reward = 0
         inital_score = self.calculate_score()
         for row in self.board:
@@ -718,9 +686,6 @@ class QwixxCard:
                     index = cell.column
 
                     reward = (10 - index - r_index) / 10
-
-                    # print("reward, index", reward, index)
-                    # multiplier = 11 - index
                     self.board[curr_row].deactivate_trailing_cells(index)
         if HUMAN_TEST:
             print(
@@ -730,13 +695,10 @@ class QwixxCard:
                 self.selected_cell.number,
             )
 
-        # if self.is_game_over():
-        #     return 30
+        if self.is_game_over():
+            return 30
 
         final_score = self.calculate_score()
-
-        # check if game ended and if won or lost
-        # print("reward", reward)
         return reward
         # return final_score - inital_score
 
@@ -788,16 +750,17 @@ class QwixxCard:
         return board
 
     def is_game_over(self):
+        # if four strikes
         if self.strikes >= 4:
             return True
 
         # if two of the rows are locked
-        # locked_rows = 0
-        # for row in self.board:
-        #     if row.is_locked:
-        #         locked_rows += 1
-        # if locked_rows >= 2:
-        #     return True
+        locked_rows = 0
+        for row in self.board:
+            if row.is_locked:
+                locked_rows += 1
+        if locked_rows >= 2:
+            return True
         return False
 
     def draw_selected_border(self, surface, selected_color):
@@ -1127,6 +1090,7 @@ class QwixxGame:
                 self.draw_game()
 
                 for i in range(self.active_player, len(self.players)):
+                    self.record_scores()
                     self.moving_player = i
                     player = self.players[i]
                     self.selected_dice = [0, 1]
@@ -1141,6 +1105,7 @@ class QwixxGame:
                     player.qwixx_card.selected_cell = None
                     player.qwixx_card.valid_cells = []
                 for i in range(0, self.active_player):
+                    self.record_scores()
                     self.moving_player = i
                     player = self.players[i]
                     self.selected_dice = [0, 1]
@@ -1150,12 +1115,14 @@ class QwixxGame:
                     player.make_optional_move(self)
                     player.qwixx_card.selected_cell = None
                     player.qwixx_card.valid_cells = []
+
                 self.game_state = GameState.COLOR_SELECTION
                 if self.is_game_over():
                     self.game_state = GameState.GAME_OVER
                 self.moving_player = self.active_player
                 self.draw_game()
             elif self.game_state == GameState.COLOR_SELECTION:
+                self.record_scores()
                 self.game_state_text = "Color selection"
                 self.draw_game()
                 active_player = self.players[self.active_player]
@@ -1173,6 +1140,7 @@ class QwixxGame:
                 if self.is_game_over():
                     self.game_state = GameState.GAME_OVER
             elif self.game_state == GameState.GAME_OVER:
+                self.record_scores()
                 max_score = -100
                 winner = None
                 for player in self.players:
@@ -1218,7 +1186,7 @@ def test_heuristic_player():
     scores = []
 
     for _ in range(n_test_games):
-        players = [HeuristicPlayer("Allan"), HeuristicPlayer("robot2")]
+        players = [GreedyHeuristicPlayer("Allan"), GreedyHeuristicPlayer("robot2")]
         game = QwixxGame(players)
         game.run()
         scores.append(players[0].get_player_score())
@@ -1290,7 +1258,7 @@ def find_area(score_diff, slope):
 
 
 def test_uncertainty():
-    players = [HeuristicPlayer("Allan"), HeuristicPlayer("robot2")]
+    players = [GreedyHeuristicPlayer("Allan"), GreedyHeuristicPlayer("robot2")]
     game = QwixxGame(players)
     game.run()
 
@@ -1363,13 +1331,13 @@ def test_multiple_uncertainty():
 
 
 def test_two_player():
-    players = [TwoPlayer("Allan"), HeuristicPlayer("robot2")]
+    players = [TwoPlayerHeuristic("Allan"), GreedyHeuristicPlayer("robot2")]
     game = QwixxGame(players)
     game.run()
 
 
 if __name__ == "__main__":
-    # players = [HumanPlayer("Allan"), HeuristicPlayer("robot2")]
+    # players = [HumanPlayer("Allan"), GreedyHeuristicPlayer("robot2")]
     # game = QwixxGame(players)
     # game.run()
     # test_parameters()
@@ -1377,31 +1345,3 @@ if __name__ == "__main__":
     # test_two_player()
     # test_uncertainty()
     # print(test_multiple_uncertainty())
-
-"""
-
-Features:
-[0]: right_most_inactive_cell_in_red_row
-[1]: right_most_inactive_cell_in_yellow_row
-[2]: right_most_inactive_cell_in_green_row
-[3]: right_most_inactive_cell_in_blue_row
-[4]: number_of_marked_boxes_in_red_row
-[5]: number_of_marked_boxes_in_yellow_row
-[6]: number_of_marked_boxes_in_green_row
-[7]: number_of_marked_boxes_in_blue_row
-[8]: number_of_boxes_missed
-[9]: will_action_result_in_lock
-[10]: will_action_result_in_first_strike
-[11]: will_action_result_in_second_strike
-[12]: will_action_result_in_third_strike
-[13]: will_action_result_in_fourth_strike
-[14]: will_action_result_in_game_over
-[15]: is_move_trying_to_lock
-[16]: is_valid_action
-
-
-
-total_cells_marked
-score
-strikes
-"""

@@ -7,7 +7,7 @@ TWO_PLAYER_CONSERVATIVE_THRESHOLD = 1
 ABSORB_STRIKE_THRESHOLD = 4
 
 
-class TwoPlayer(Player):
+class TwoPlayerHeuristic(Player):
     def __init__(self, name):
         super().__init__(name)
 
@@ -432,7 +432,7 @@ def test_two_player():
     games = 10000
     total_games_won = 0
     for _ in range(games):
-        players = [TwoPlayer("two_player"), HeuristicPlayer("robot")]
+        players = [TwoPlayerHeuristic("two_player"), GreedyHeuristicPlayer("robot")]
         game = QwixxGame(players)
         winner_name, winner_score = game.run()
         if winner_name == "two_player":
@@ -443,7 +443,7 @@ def test_two_player():
 def play_x_num_games(num_games):
     game_scores = []
     for _ in range(num_games):
-        players = [TwoPlayer("Player1"), TwoPlayer("Player2")]
+        players = [TwoPlayerHeuristic("Player1"), TwoPlayerHeuristic("Player2")]
         game = QwixxGame(players)
         game.run()
 
@@ -455,6 +455,29 @@ def play_x_num_games(num_games):
     return game_scores
 
 
+# def calculate_uncertainty(player1_scores, player2_scores):
+#     S = 100  # Number of samples
+#     # Calculate the lead history as the difference in scores between the two players
+#     lead_history = np.array(player1_scores) - np.array(player2_scores)
+
+#     # Calculate the interpolated lead values for S samples
+#     x_values = np.linspace(0, len(lead_history) - 1, S)
+#     interpolated_lead_values = np.interp(
+#         x_values, np.arange(len(lead_history)), lead_history
+#     )
+
+#     A_uncl = 0
+#     for s in range(S):
+#         t = s / (S - 1)  # Normalized time index
+#         # The estimated lead value at sample s is the interpolated value
+#         average_lead = interpolated_lead_values[s]
+#         # Subtract the average lead from t and take the minimum between this value and 1
+#         A_uncl += min(1, t - (average_lead))
+
+#     A_uncl /= S  # Divide by the number of samples to normalize
+#     return A_uncl
+
+
 def calculate_uncertainty(player1_scores, player2_scores):
     if player1_scores[-1] > player2_scores[-1]:
         winning_scores = player1_scores
@@ -463,8 +486,7 @@ def calculate_uncertainty(player1_scores, player2_scores):
         winning_scores = player2_scores
         losing_scores = player1_scores
 
-    lead_history = np.array(winning_scores) - np.array(losing_scores)
-
+    lead_history = np.abs(np.array(winning_scores) - np.array(losing_scores))
     # Define the interpolation line to intersect the winning player's last point
     interpolation_line = [
         (0, 0),
@@ -504,7 +526,7 @@ def plot_uncertainty(player1_scores, player2_scores, M=100):
         winning_scores = player2_scores
         losing_scores = player1_scores
 
-    lead_history = np.array(winning_scores) - np.array(losing_scores)
+    lead_history = np.abs(np.array(winning_scores) - np.array(losing_scores))
 
     # Define the interpolation line to intersect the winning player's last point
     interpolation_line = [
@@ -702,7 +724,7 @@ def plot_histogram(ax, data, bins, title, x_label):
 
 
 def get_metrics():
-    players = [TwoPlayer("Player1"), TwoPlayer("Player2")]
+    players = [TwoPlayerHeuristic("Player1"), TwoPlayerHeuristic("Player2")]
     game = QwixxGame(players)
     winning_name, winning_score = game.run()
 
@@ -874,4 +896,4 @@ def calculate_drama1(player1_scores, player2_scores):
 if __name__ == "__main__":
     # test_two_player()
     # get_metrics()
-    get_metrics_for_n_games(10000)
+    get_metrics_for_n_games(5000)

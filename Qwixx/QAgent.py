@@ -1,4 +1,3 @@
-
 import time
 from random import randint
 
@@ -16,7 +15,7 @@ PRINT_GAME_INFO = True
 
 if EXPLOIT_ONLY:
     GAMES = 10000
-    RECHECK = GAMES 
+    RECHECK = GAMES
 else:
     GAMES = 150000
     RECHECK = GAMES // 10
@@ -32,6 +31,7 @@ def human_print(string, *args):
     if HUMAN_PRINT:
         print(string, args)
 
+
 class QAgent(Player):
     def __init__(self, name):
         super().__init__(name)
@@ -40,24 +40,36 @@ class QAgent(Player):
         self.n_exploits = 0
         self.n_games = 0
         self.invalid_moves = 0
-        self.InadequateChecks = 0 
+        self.InadequateChecks = 0
         self.InvalidDeactivates = 0
         self.minimum_epsilon = 10
-
 
         self.learning_rate = 0.001
         self.epsilon = 100
         self.gamma = 0.99
         self.step = 0.0001
         if EXPLOIT_ONLY:
-            self.weights = [-1.316640702059542, -0.12708131942427892, -0.46199518912465143, 0.289121528627552, -0.0669370884076102] #[-1.376976493120759, -0.0653208861449142, -0.49825906757250876, 0.3737164290838795, -0.06249615654571766] # [-1.3834990044257112, -0.08734026750561809, -0.4885794061309719, 0.42170031980440015, -0.06046223231378747]# [-1.4461000751133606, -0.07292251815457883, -0.5058877438501571] # [-1.2640389959626739, -0.9451892917177317, 0.18346097243470913] # [-1.279959348286468, -0.9389276994763408, 0.24330722784946257] #[-1.248825282210372, -0.9580416863700797, 0.21658277751757418] # [-1.4083951761175781, -1.123894187907306, 0.2947252261814512] # [-10.838601702360117, -4.447902378735281] # [-4.213611058893543, -6.599510175809286]
+            self.weights = [
+                -1.2563760053420268,
+                -0.1369337654949674,
+                -0.4532137623649724,
+                0.37198449303131115,
+                -0.0734007364091224,
+            ]
+
+            # [
+            #     -1.316640702059542,
+            #     -0.12708131942427892,
+            #     -0.46199518912465143,
+            #     0.289121528627552,
+            #     -0.0669370884076102,
+            # ]  # [-1.376976493120759, -0.0653208861449142, -0.49825906757250876, 0.3737164290838795, -0.06249615654571766] # [-1.3834990044257112, -0.08734026750561809, -0.4885794061309719, 0.42170031980440015, -0.06046223231378747]# [-1.4461000751133606, -0.07292251815457883, -0.5058877438501571] # [-1.2640389959626739, -0.9451892917177317, 0.18346097243470913] # [-1.279959348286468, -0.9389276994763408, 0.24330722784946257] #[-1.248825282210372, -0.9580416863700797, 0.21658277751757418] # [-1.4083951761175781, -1.123894187907306, 0.2947252261814512] # [-10.838601702360117, -4.447902378735281] # [-4.213611058893543, -6.599510175809286]
         else:
             # self.weights = [0 for i in range()]
             self.weights = [0 for i in range(len(functions))]
         self.best_weights = None
-        
+
         self.valid_actions = []
-    
 
     def get_state(self, game):
         return game.get_state()
@@ -69,12 +81,12 @@ class QAgent(Player):
         self.action_counts = [0 for i in range(9)]
         self.qwixx_card = QwixxCard(self.name)
         self.is_made_move = False
-        self.InadequateChecks = 0 
+        self.InadequateChecks = 0
         self.InvalidDeactivates = 0
-    
+
     def roll_dice(self, game):
         game.roll_dice()
-    
+
     def make_color_move(self, game):
         # adapter
         self.highlight_all_selectable_cells(game)
@@ -104,13 +116,12 @@ class QAgent(Player):
                 return 0, (action // 2) + 2
             else:
                 return 1, (action // 2) + 2
-        else: 
+        else:
             if white1.get_value() >= white0.get_value():
                 return 1, (action // 2) + 2
             else:
                 return 0, (action // 2) + 2
-            
-    
+
     # def select_cell(self, state, action):
     #     print("selecting cell", state, action)
     #     # get cell coordinates
@@ -124,13 +135,12 @@ class QAgent(Player):
         else:
             self.qwixx_card.valid_cells.append(self.qwixx_card.get_cell_by_x_y(x, y))
         return
-    
+
     def assign_dice(self, white1, white2):
         if white1.get_value() <= white2.get_value():
             return [white1, white2]
         else:
             return [white2, white1]
-
 
     def highlight_all_selectable_cells(self, game):
         # print("called highlighted")
@@ -141,7 +151,6 @@ class QAgent(Player):
 
         white_dice = self.assign_dice(dice[0], dice[1])
 
-    
         for colored_die in forward_running:
             for white_die in white_dice:
                 total = white_die.get_value() + colored_die.get_value()
@@ -152,7 +161,6 @@ class QAgent(Player):
                     row = 1
                 self.add_cell_to_valid_cells(row, column)
 
-    
         for colored_die in backward_running:
             for white_die in reversed(white_dice):
                 total = white_die.get_value() + colored_die.get_value()
@@ -162,28 +170,25 @@ class QAgent(Player):
                 else:
                     row = 3
                 self.add_cell_to_valid_cells(row, column)
-        
-            
+
         game.draw_game()
-        
+
         time.sleep(CPU_WAIT_TIME)
-        
 
     def make_move(self, game, curr_state, action):
         self.action_counts[action] += 1
-        
+
         if action == 8:
             curr_state = game.get_state()
             if curr_state["active_player"] == 1 and curr_state["game_state"].value == 3:
-                
                 reward = PENALTY_FOR_NO_ACTIONS
-            else: 
+            else:
                 reward = 0
-            
+
             # TODO: FIX THIS should also update on skip
             # maybe add keyword argument
             # print("reward", reward)
-            new_state = game.get_state() 
+            new_state = game.get_state()
             self.update_weights(reward, curr_state, action, new_state)
             return
 
@@ -191,7 +196,7 @@ class QAgent(Player):
         # print("here valid cells")
         # for valid_cell in valid_cells:
         #     print(valid_cell)
-        
+
         if len(valid_cells) == 4:
             self.player_select_cell(valid_cells[action // 2])
             # print("valid cell after selection", valid_cells[action // 2])
@@ -200,7 +205,7 @@ class QAgent(Player):
             # print("valid cell after selection", valid_cells[action])
             self.player_select_cell(valid_cells[action])
             # self.qwixx_card.selected_cell = valid_cells[action]
-        
+
         try:
             reward = self.qwixx_card.cross_out_cell()
             self.is_made_move = True
@@ -214,11 +219,11 @@ class QAgent(Player):
             reward = INVALID_MOVE_REWARD
         finally:
             # print("reward", reward)
-            new_state = game.get_state() 
+            new_state = game.get_state()
             self.update_weights(reward, curr_state, action, new_state)
             # print(self.weights)
             return
-        
+
     def update_weights(self, reward, curr_state, action, new_state):
         if EXPLOIT_ONLY:
             return
@@ -229,9 +234,12 @@ class QAgent(Player):
         else:
             maxQvalue = self.getMaxQValue(new_state)
         for i in range(len(self.weights)):
-            self.weights[i] = self.weights[i] + self.learning_rate * (reward + self.gamma * maxQvalue - self.getQValue(curr_state, action)) * features[i]
-        
-        
+            self.weights[i] = (
+                self.weights[i]
+                + self.learning_rate
+                * (reward + self.gamma * maxQvalue - self.getQValue(curr_state, action))
+                * features[i]
+            )
 
     def set_list_of_valid_actions(self, state):
         valid_actions = []
@@ -258,30 +266,26 @@ class QAgent(Player):
                             valid_actions.append(action * 2 + 1)
                     else:
                         valid_actions.append(action * 2 + 1)
-        
+
         valid_actions.append(8)
         self.valid_actions = valid_actions
-
 
     def do_skip(self, state):
         threshold = 0.4
 
         game_state = state["game_state"].value
         if state["already_moved"] == True or state["active_player"] == 0:
-            threshold = 0.1        
+            threshold = 0.1
 
         min_skip = 12
         for action in range(8):
-            min_skip = min(getTotalCellsMissed2(state, action), min_skip)
+            min_skip = min(getTotalCellsMissed(state, action), min_skip)
         # print("min skip", min_skip)
         if (min_skip) <= threshold:
             return False
         else:
             return True
 
-
-
-    
     def get_action(self, state):
         # for now, always make a random move
         if self.do_skip(state):
@@ -291,7 +295,7 @@ class QAgent(Player):
         self.set_list_of_valid_actions(state)
         if EXPLOIT_ONLY:
             return self.getMaxAction(state)
-            
+
         # print("valid actions", self.valid_actions)
 
         # epsilon starts at zero and then increases over time
@@ -307,11 +311,11 @@ class QAgent(Player):
             self.n_exploits += 1
             final_move = self.getMaxAction(state)
             # exploit
-        
+
         self.epsilon = self.epsilon - self.step
         human_print("making move", final_move)
         return final_move
-    
+
     def getMaxQValue(self, state):
         # print("getMaxQValue")
         max_Q_value = 0
@@ -334,7 +338,7 @@ class QAgent(Player):
                 max_Q_value = q_value
                 max_action = action
         return max_action
-    
+
     def getQValue(self, state, action):
         weights = self.weights
         features, feature_values = create_feature_list(state, action)
@@ -368,16 +372,12 @@ def train():
 
     total_games_won = 0
 
-
-
     while n_games < GAMES:
-        
-            
         # HeuristicPlayer
         if HUMAN_TEST:
             game = QwixxGame([HumanPlayer("Robot"), qAgent])
         else:
-            game = QwixxGame([HeuristicPlayer("Robot"), qAgent])
+            game = QwixxGame([GreedyHeuristicPlayer("Robot"), qAgent])
 
         winner_name, winner_score = game.run()
         if winner_name == "QAgent":
@@ -397,26 +397,20 @@ def train():
             best_average_score = average_score
             qAgent.best_weights = qAgent.weights
 
-
-
         # if n_games == GAMES // 2:
         #     midway_score = total_score / n_games
         # if n_games == (GAMES // 4) * 3:
         #     if total_score / n_games < midway_score:
         #         break
 
-        
         if not EXPLOIT_ONLY and counter >= RECHECK:
             counter = 0
             if total_score / n_games < prev_average_score:
                 break
             else:
                 prev_average_score = total_score / n_games
-            
-            
-        
+
         counter += 1
-        
 
         # Plot scores in real-time
         # plt.plot(all_scores, color='r', label='Scores')
@@ -429,45 +423,55 @@ def train():
         mean_exploits.append(total_exploits / n_games)
         mean_explores.append(total_explores / n_games)
 
-        
         invalid_moves.append(total_invalid_moves / n_games)
 
-
         if PRINT_GAME_INFO:
-            print(f"Game {n_games:5} Winner: {winner_name:4} QAgent score: {score:3} | Explores: {qAgent.n_explores:3} | Exploits: {qAgent.n_exploits:3} InadequateChecks: {qAgent.InadequateChecks:3} | InvalidDeactivates: {qAgent.InvalidDeactivates:3}")
+            print(
+                f"Game {n_games:5} Winner: {winner_name:4} QAgent score: {score:3} | Explores: {qAgent.n_explores:3} | Exploits: {qAgent.n_exploits:3} InadequateChecks: {qAgent.InadequateChecks:3} | InvalidDeactivates: {qAgent.InvalidDeactivates:3}"
+            )
             print(qAgent.weights)
             print(qAgent.action_counts)
-            
+
         # print("Game ", n_games, "QAgent score: ", score, "| Explores: ", qAgent.n_explores, "| Exploits: ", qAgent.n_exploits, "Invalid_moves", qAgent.invalid_moves)
-        
+
         qAgent.player_reset()
-    
+
     print("total_games_won", total_games_won)
     if EXPLOIT_ONLY:
-        plt.title(f'Average Score of Agent over {n_games} games\nWeights used: {qAgent.get_best_weights()}')
+        plt.title(
+            f"Average Score of Agent over {n_games} games\nWeights used: {qAgent.get_best_weights()}"
+        )
     else:
-        plt.title(f'Average Score of Agent over {n_games} episodes\n LR:{qAgent.learning_rate}; Step: {qAgent.step}\n Best weights: {qAgent.get_best_weights()}')
-    plt.xlabel('Episodes')
-    plt.ylabel('Frequency')
-    plt.plot(all_scores, color='r', label='Scores')
-    plt.plot(mean_scores, color='b', label='Mean Scores')
+        plt.title(
+            f"Average Score of Agent over {n_games} episodes\n LR:{qAgent.learning_rate}; Step: {qAgent.step}\n Best weights: {qAgent.get_best_weights()}"
+        )
+    plt.xlabel("Episodes")
+    plt.ylabel("Frequency")
+    plt.plot(all_scores, color="r", label="Scores")
+    plt.plot(mean_scores, color="b", label="Mean Scores")
     if not EXPLOIT_ONLY:
-        plt.plot(mean_exploits, color='g', label='Exploits')
-        plt.plot(mean_explores, color='m', label='Explores')
-        plt.plot(invalid_moves, color='orange', label='Invalid moves')
-    plt.text(n_games, average_score, f'{average_score:.2f}', color='b', fontsize=8, ha='left', va='bottom')
-    plt.legend(loc='upper left', bbox_to_anchor=(1, 1))
+        plt.plot(mean_exploits, color="g", label="Exploits")
+        plt.plot(mean_explores, color="m", label="Explores")
+        # plt.plot(invalid_moves, color='orange', label='Invalid moves')
+    plt.text(
+        n_games,
+        average_score,
+        f"{average_score:.2f}",
+        color="b",
+        fontsize=8,
+        ha="left",
+        va="bottom",
+    )
+    plt.legend(loc="upper left", bbox_to_anchor=(1, 1))
 
     plt.tight_layout()
 
     plt.show()
     print("average score:", average_score)
     print("best weights:", qAgent.best_weights)
-    
+
     return qAgent.weights
+
 
 if __name__ == "__main__":
     print(train())
-
-
-        
